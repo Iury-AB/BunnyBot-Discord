@@ -1,7 +1,8 @@
 require('dotenv').config();
 const express = require('express');
+const fs = require('fs');
 const bodyParser = require('body-parser');
-const { Client, IntentsBitField, Guild, REST, Routes } = require('discord.js');
+const { Client, IntentsBitField, Guild, REST, Routes, Permissions } = require('discord.js');
 const app = express();
 const port = 3000;
 //const mongoose = require('mongoose');
@@ -41,6 +42,14 @@ const client = new Client({
   }
 
 })();*/
+
+// Load the configuration file
+let config = {};
+try {
+    config = JSON.parse(fs.readFileSync('config.json'));
+} catch (error) {
+    console.error('Error loading configuration file:', error);
+}
 
 client.on('ready', (c) => {
   console.log(`${c.user.tag} is ready.`);
@@ -121,10 +130,10 @@ app.post('/submit-form', async (req, res) => {
   const values = Object.values(received).map(value => parseInt(value));
   const keys = Object.keys(received);
   console.log(keys);
-  console.log(values);
+  console.log(received);
 
-  const guildId = "859934102203138118"; // server ID
-  const channelId = '859934102203138121'; // channel ID
+  const guildId = received["discordID"]; // server ID
+  const channelId = config.guilds[guildId]; // channel ID
   const guild = await client.guilds.fetch(guildId);
   const channel = guild.channels.cache.get(channelId);
 
@@ -161,14 +170,16 @@ app.post('/dano', async (req, res) => {
   console.log(keys);
   console.log(values);
 
-  const guildId = "859934102203138118"; // server ID
-  const channelId = '859934102203138121'; // channel ID
+  const guildId = received["discordID"]; // server ID
+  console.log(guildId);
+  console.log(config.guilds[guildId]);
+  const channelId = config.guilds[guildId]; // channel ID
   const guild = await client.guilds.fetch(guildId);
   const channel = guild.channels.cache.get(channelId);
 
-  const resultado = values[2];
+  const resultado = values[3];
   const nvlDano = values[0];
-  const rolagens = values[3];
+  const rolagens = values[4];
   const calcDano = values[1];
 
   let msg;
@@ -199,17 +210,17 @@ client.on('interactionCreate', async (interaction) => {
     if (!interaction.member.permissions.has('MANAGE_CHANNELS')) {
       return interaction.reply({ content: 'You do not have permission to bind the bot to a channel.', ephemeral: true });
     }
-
-    // Get the provided channel option
     const channelOption = interaction.options.getChannel('channel');
+    
+    // Store the ID of the specified channel in the configuration file
+    config.guilds = config.guilds || {};
+    config.guilds[interaction.guild.id] = channelOption.id;
 
-    // Update bot's configuration to store the bound channel ID
-    // (You'll need to implement your own logic for this)
-    // For demonstration purposes, we'll just log the channel ID
-    console.log(`Bot has been bound to channel ${channelOption.id}.`);
+    await interaction.reply("Ok, ficarei aí.");
 
-    // Send a confirmation message
-    await interaction.reply({ content: `Bot has been bound to channel <#${channelOption.id}>.`, ephemeral: true });
+    // Save the updated configuration file
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+
   }
 });
 
