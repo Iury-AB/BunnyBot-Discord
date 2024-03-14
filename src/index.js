@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const bodyParser = require('body-parser');
-const { Client, IntentsBitField, Guild, REST, Routes, Permissions } = require('discord.js');
+const { Client, IntentsBitField, Guild, REST, Routes, Permissions, GuildMembers } = require('discord.js');
 const app = express();
 const port = 3000;
 //const mongoose = require('mongoose');
@@ -123,24 +123,41 @@ const qualTeste = function(nome){
 app.post('/submit-form', async (req, res) => {
   // Handle incoming form data
   res.send();
-
+  console.log(req.body);
   const reqBody = JSON.stringify(req.body);
   const received = JSON.parse(reqBody);
   // Map over the values array and parse each value to an integer
   const values = Object.values(received).map(value => parseInt(value));
-  const keys = Object.keys(received);
-  console.log(keys);
-  console.log(received);
-
+  let newKeys = Object.keys(received);
+  let perIndex;
+  for(var i = 0 ; i < newKeys.length; i++){
+    var index = newKeys[i].indexOf('.');
+    if(newKeys[i][0] == 'V') perIndex = newKeys[i].split('.')[1];
+    newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
+  }
+  const dadosFicha = {};
+  newKeys.forEach((key, index) => {
+    dadosFicha[key] = values[index];
+  });
+  
+  let channelId;
+  let channel;
   const guildId = received["discordID"]; // server ID
-  const channelId = config.guilds[guildId]; // channel ID
   const guild = await client.guilds.fetch(guildId);
-  const channel = guild.channels.cache.get(channelId);
-
-  const resultado = keys[0][0] == 'r'? values[0] : values[1];
-  const bonus = keys[0][0] != 'r'? values[0] : values[1];
+  
+  if(config.guilds && config.guilds[guildId]){
+    channelId = config.guilds[guildId]; // channel ID
+    channel = guild.channels.cache.get(channelId);
+  }else{
+    const fetchedGuild = await client.guilds.fetch(guildId);
+    const systemChannel = fetchedGuild.systemChannel;
+    channel = systemChannel;
+  }
+  
+  const resultado = dadosFicha["resultado"];
+  const bonus = dadosFicha["ValorPericias"];
   const rolagem = resultado - bonus;
-  const nomeTeste = keys[0][0] == 'V'? qualTeste(keys[0]) : qualTeste(keys[1]);
+  const nomeTeste = qualTeste("ValorPericias."+perIndex);
 
   let msg;
   if(rolagem == 20 || rolagem == 1){
@@ -153,7 +170,15 @@ app.post('/submit-form', async (req, res) => {
   }else{
     msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + nomeTeste;
   }
+  const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
 
+  sheetUser = cachedUser.first();
+  console.log(received["Jogador"]);
+  if(sheetUser && Object.keys(received).length > 3){
+    msg = "<@" + sheetUser.id + ">\n" + msg;
+  }else{
+    console.log("Usuario não encontrado.");
+  }
   
   await channel.send(msg);
 });
@@ -170,17 +195,24 @@ app.post('/dano', async (req, res) => {
   console.log(keys);
   console.log(values);
 
+  let channelId;
+  let channel;
   const guildId = received["discordID"]; // server ID
-  console.log(guildId);
-  console.log(config.guilds[guildId]);
-  const channelId = config.guilds[guildId]; // channel ID
   const guild = await client.guilds.fetch(guildId);
-  const channel = guild.channels.cache.get(channelId);
+  
+  if(config.guilds && config.guilds[guildId]){
+    channelId = config.guilds[guildId]; // channel ID
+    channel = guild.channels.cache.get(channelId);
+  }else{
+    const fetchedGuild = await client.guilds.fetch(guildId);
+    const systemChannel = fetchedGuild.systemChannel;
+    channel = systemChannel;
+  }
 
-  const resultado = values[3];
-  const nvlDano = values[0];
-  const rolagens = values[4];
-  const calcDano = values[1];
+  const resultado = received["resultadoDano"];
+  const nvlDano = received["Dano.T"];
+  const rolagens = received["rolagensDano"];
+  const calcDano = received["TesteDano"];
 
   let msg;
   if(calcDano == "---"){
@@ -189,17 +221,101 @@ app.post('/dano', async (req, res) => {
   else{
     msg =  "` " + resultado + " ` ⟵ `" + rolagens + "` ⟵ Dano " + nvlDano + " [" + calcDano +"]";
   }
+
+  const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
+
+  sheetUser = cachedUser.first();
+
+  if(sheetUser && Object.keys(received).length > 3){
+    msg = "<@" + sheetUser.id + ">\n" + msg;
+  }else{
+    console.log("Usuario não encontrado.");
+  }
+
+  await channel.send(msg);
+});
+
+app.post('/habilidade', async (req, res) => {
+  // Handle incoming form data
+  res.send();
+  console.log(req.body);
+  const reqBody = JSON.stringify(req.body);
+  const received = JSON.parse(reqBody);
+  // Map over the values array and parse each value to an integer
+  const values = Object.values(received).map(value => parseInt(value));
+  let newKeys = Object.keys(received);
+  let perIndex;
+  for(var i = 0 ; i < newKeys.length; i++){
+    var index = newKeys[i].indexOf('.');
+    if(newKeys[i][0] == 'r') perIndex = newKeys[i].split('.')[1];
+    newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
+  }
+  const dadosFicha = {};
+  newKeys.forEach((key, index) => {
+    dadosFicha[key] = values[index];
+  });
+  
+  let channelId;
+  let channel;
+  const guildId = received["discordID"]; // server ID
+  const guild = await client.guilds.fetch(guildId);
+  
+  if(config.guilds && config.guilds[guildId]){
+    channelId = config.guilds[guildId]; // channel ID
+    channel = guild.channels.cache.get(channelId);
+  }else{
+    const fetchedGuild = await client.guilds.fetch(guildId);
+    const systemChannel = fetchedGuild.systemChannel;
+    channel = systemChannel;
+  }
+  console.log(values[1]);
+  const resultado = dadosFicha["resultado"];
+  const bonus = values[1];
+  const rolagem = resultado - bonus;
+  const nomeTeste = perIndex;
+
+  let msg;
+  if(rolagem == 20 || rolagem == 1){
+    msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + nomeTeste;
+    if(rolagem == 20){
+      msg = ":sparkles: " + msg; 
+    }else if(rolagem == 1){
+      msg = ":skull: " + msg;
+    }
+  }else{
+    msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + nomeTeste;
+  }
+  const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
+
+  sheetUser = cachedUser.first();
+  console.log(received["Jogador"]);
+  if(sheetUser && Object.keys(received).length > 3){
+    msg = "<@" + sheetUser.id + ">\n" + msg;
+  }else{
+    console.log("Usuario não encontrado.");
+  }
+  
   await channel.send(msg);
 });
 
 client.on('guildCreate',async guild => {
   const systemChannel = guild.systemChannel;
   if(systemChannel){
-    guild = guild.id;
+    
   }else{
     console.log("erro");
   }
   
+});
+
+client.on('guildDelete', (guild) => {
+  // Remove the guild's configuration from the config object
+  delete config.guilds[guild.id];
+  
+  // Save the updated configuration file
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+  
+  console.log(`Removed configuration for guild ${guild.name} (${guild.id})`);
 });
 
 client.on('interactionCreate', async (interaction) => {
