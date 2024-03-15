@@ -335,6 +335,7 @@ client.on('interactionCreate', async (interaction) => {
 
     // Save the updated configuration file
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    console.log("Mudei de canal");
 
   }
 });
