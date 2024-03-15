@@ -268,9 +268,8 @@ app.post('/habilidade', async (req, res) => {
     const systemChannel = fetchedGuild.systemChannel;
     channel = systemChannel;
   }
-  console.log(values[1]);
   const resultado = dadosFicha["resultado"];
-  const bonus = values[1];
+  const bonus = dadosFicha["resultado"] == values[0] ? values[1] : values[0];
   const rolagem = resultado - bonus;
   const nomeTeste = perIndex;
 
