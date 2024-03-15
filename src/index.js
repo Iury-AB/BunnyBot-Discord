@@ -269,7 +269,7 @@ app.post('/habilidade', async (req, res) => {
     channel = systemChannel;
   }
   const resultado = dadosFicha["resultado"];
-  const bonus = dadosFicha["resultado"] == values[0] ? values[1] : values[0];
+  const bonus = dadosFicha["Hab"];
   const rolagem = resultado - bonus;
   const nomeTeste = perIndex;
 
@@ -292,6 +292,86 @@ app.post('/habilidade', async (req, res) => {
     msg = "<@" + sheetUser.id + ">\n" + msg;
   }else{
     console.log("Usuario não encontrado.");
+  }
+  
+  await channel.send(msg);
+});
+
+app.post('/ataque', async (req, res) => {
+  // Handle incoming form data
+  res.send();
+  console.log(req.body);
+  const reqBody = JSON.stringify(req.body);
+  const received = JSON.parse(reqBody);
+  // Map over the values array and parse each value to an integer
+  const values = Object.values(received).map(value => parseInt(value));
+  let newKeys = Object.keys(received);
+  let perIndex;
+  for(var i = 0 ; i < newKeys.length; i++){
+    var index = newKeys[i].indexOf(' ');
+    if(newKeys[i][0] == 'r') perIndex = newKeys[i].split(' ')[1];
+    newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
+  }
+  const dadosFicha = {};
+  newKeys.forEach((key, index) => {
+    dadosFicha[key] = values[index];
+  });
+  
+  let channelId;
+  let channel;
+  const guildId = received["discordID"]; // server ID
+  const guild = await client.guilds.fetch(guildId);
+  
+  if(config.guilds && config.guilds[guildId]){
+    channelId = config.guilds[guildId]; // channel ID
+    channel = guild.channels.cache.get(channelId);
+  }else{
+    const fetchedGuild = await client.guilds.fetch(guildId);
+    const systemChannel = fetchedGuild.systemChannel;
+    channel = systemChannel;
+  }
+  const resultadoAcerto = dadosFicha["resultadoAc"];
+  const resultadoDano = dadosFicha["resutadoDano"];
+  const bonusAcerto = dadosFicha["Acerto"];
+  const nvlDano = dadosFicha["Dano"];
+  const rolDano = dadosFicha["rolagensDano"];
+  const calcDano = dadosFicha["Rolagem"];
+  const crit = dadosFicha["Crit"];
+  const rolagemAcerto = resultadoAcerto - bonusAcerto;
+  const nomeTeste = perIndex;
+
+  let msg;
+  //parte sobre o Acerto
+  if(rolagemAcerto >= crit || rolagemAcerto == 1){
+    msg = "` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto + ", Ataque" + nomeTeste;
+    if(rolagemAcerto >= crit){
+      msg = ":sparkles: " + msg; 
+    }else if(rolagemAcerto == 1){
+      msg = ":skull: " + msg;
+    }
+  }else{
+    msg = "` " + resultado + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonus + ", " + nomeTeste;
+  }
+  const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
+
+  sheetUser = cachedUser.first();
+  console.log(received["Jogador"]);
+  if(sheetUser && Object.keys(received).length > 3){
+    msg = "<@" + sheetUser.id + ">\n" + msg;
+  }else{
+    console.log("Usuario não encontrado.");
+  }
+
+  //parte sobre o dano
+  if(calcDano == "---"){
+    msg += "\n\n:mag: Dano não encontrado."
+  }
+  else{
+    if(rolagemAcerto >= crit){
+      msg +=  "\n\n**` " + resultadoDano + " `** ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " crítico! [2*(" + calcDano +")]";
+    }else{
+      msg +=  "\n\n` " + resultadoDano + " ` ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " [" + calcDano +"]";
+    }
   }
   
   await channel.send(msg);
