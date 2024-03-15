@@ -226,7 +226,7 @@ app.post('/dano', async (req, res) => {
 
   sheetUser = cachedUser.first();
 
-  if(sheetUser && Object.keys(received).length > 3){
+  if(sheetUser && Object.keys(received).length > 5){
     msg = "<@" + sheetUser.id + ">\n" + msg;
   }else{
     console.log("Usuario não encontrado.");
@@ -343,7 +343,7 @@ client.on('interactionCreate', async (interaction) => {
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+  console.log(`Server listening at 18.222.112.127:${port}`);
 });
 
 
