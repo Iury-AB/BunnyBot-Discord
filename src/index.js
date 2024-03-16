@@ -331,6 +331,7 @@ app.post('/ataque', async (req, res) => {
     channel = systemChannel;
   }
   console.log(dadosFicha);
+  console.log(dadosFicha["resultadoDano"]);
   const resultadoAcerto = parseInt(dadosFicha["resultadoAc"]);
   const resultadoDano = dadosFicha["resutadoDano"];
   const bonusAcerto = parseInt(dadosFicha["Acerto"]);
@@ -356,7 +357,6 @@ app.post('/ataque', async (req, res) => {
   const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
 
   sheetUser = cachedUser.first();
-  console.log(received["Jogador"]);
   if(sheetUser && Object.keys(received).length > 8){
     msg = "<@" + sheetUser.id + ">\n" + msg;
   }else{
