@@ -331,10 +331,9 @@ app.post('/ataque', async (req, res) => {
     channel = systemChannel;
   }
   console.log(dadosFicha);
-  console.log(dadosFicha["resultadoDano"]);
   const resultadoAcerto = parseInt(dadosFicha["resultadoAc"]);
   const bonusAcerto = parseInt(dadosFicha["Acerto"]);
-  const calcDano = dadosFicha["Rolagem"];
+  const crit = parseInt(dadosFicha["Crit"]);
   const rolagemAcerto = resultadoAcerto - bonusAcerto;
   const nomeTeste = perIndex;
 
@@ -364,7 +363,7 @@ app.post('/ataque', async (req, res) => {
   const resultadoDano = dadosFicha["resutadoDano"];
   const nvlDano = parseInt(dadosFicha["Dano"]);
   const rolDano = dadosFicha["rolagensDano"];
-  const crit = parseInt(dadosFicha["Crit"]);
+  const calcDano = dadosFicha["Rolagem"];
 
   if(calcDano == "---"){
     msg += "\n\n:mag: Dano não encontrado."
