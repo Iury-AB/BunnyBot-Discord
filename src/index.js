@@ -340,14 +340,14 @@ app.post('/ataque', async (req, res) => {
   let msg;
   //parte sobre o Acerto
   if(rolagemAcerto >= crit || rolagemAcerto == 1){
-    msg = "` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto + ", Ataque " + nomeTeste;
+    msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto;
     if(rolagemAcerto >= crit){
       msg = ":sparkles: " + msg; 
     }else if(rolagemAcerto == 1){
       msg = ":skull: " + msg;
     }
   }else{
-    msg = "` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto + ", Ataque " + nomeTeste;
+    msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto;
   }
   const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
 
@@ -371,9 +371,9 @@ app.post('/ataque', async (req, res) => {
   else{
     console.log(resultadoDano);
     if(rolagemAcerto >= crit){
-      msg +=  "\n\n**` " + resultadoDano*2 + " `** ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " crítico! [2*(" + calcDano +")]";
+      msg +=  "\n**` " + resultadoDano*2 + " `** ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " crítico! [2*(" + calcDano +")]";
     }else{
-      msg +=  "\n\n` " + resultadoDano + " ` ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " [" + calcDano +"]";
+      msg +=  "\n` " + resultadoDano + " ` ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " [" + calcDano +"]";
     }
   }
   
