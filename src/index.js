@@ -360,7 +360,7 @@ app.post('/ataque', async (req, res) => {
 
   //parte sobre o dano
   console.log(dadosFicha);
-  const resultadoDano = dadosFicha["resutadoDano"];
+  const resultadoDano = dadosFicha["resultadoDano"];
   const nvlDano = parseInt(dadosFicha["Dano"]);
   const rolDano = dadosFicha["rolagensDano"];
   const calcDano = dadosFicha["Rolagem"];
