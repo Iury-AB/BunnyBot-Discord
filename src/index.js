@@ -304,7 +304,7 @@ app.post('/ataque', async (req, res) => {
   const reqBody = JSON.stringify(req.body);
   const received = JSON.parse(reqBody);
   // Map over the values array and parse each value to an integer
-  const values = Object.values(received).map(value => parseInt(value));
+  const values = Object.values(received);
   let newKeys = Object.keys(received);
   let perIndex;
   for(var i = 0 ; i < newKeys.length; i++){
@@ -331,13 +331,13 @@ app.post('/ataque', async (req, res) => {
     channel = systemChannel;
   }
   console.log(dadosFicha);
-  const resultadoAcerto = dadosFicha["resultadoAc"];
-  const resultadoDano = dadosFicha["resutadoDano"];
-  const bonusAcerto = dadosFicha["Acerto"];
-  const nvlDano = dadosFicha["Dano"];
+  const resultadoAcerto = parseInt(dadosFicha["resultadoAc"]);
+  const resultadoDano = parseInt(dadosFicha["resutadoDano"]);
+  const bonusAcerto = parseInt(dadosFicha["Acerto"]);
+  const nvlDano = parseInt(dadosFicha["Dano"]);
   const rolDano = dadosFicha["rolagensDano"];
   const calcDano = dadosFicha["Rolagem"];
-  const crit = dadosFicha["Crit"];
+  const crit = parseInt(dadosFicha["Crit"]);
   const rolagemAcerto = resultadoAcerto - bonusAcerto;
   const nomeTeste = perIndex;
 
