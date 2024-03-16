@@ -309,7 +309,7 @@ app.post('/ataque', async (req, res) => {
   let perIndex;
   for(var i = 0 ; i < newKeys.length; i++){
     var index = newKeys[i].indexOf(' ');
-    if(newKeys[i][0] == 'r') perIndex = newKeys[i].split(' ')[1];
+    if(newKeys[i][0] == 'A') perIndex = newKeys[i].split(' ')[1];
     newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
   }
   const dadosFicha = {};
@@ -350,13 +350,13 @@ app.post('/ataque', async (req, res) => {
       msg = ":skull: " + msg;
     }
   }else{
-    msg = "` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto + ", " + nomeTeste;
+    msg = "` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto + ", Ataque" + nomeTeste;
   }
   const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
 
   sheetUser = cachedUser.first();
   console.log(received["Jogador"]);
-  if(sheetUser && Object.keys(received).length > 3){
+  if(sheetUser && Object.keys(received).length > 8){
     msg = "<@" + sheetUser.id + ">\n" + msg;
   }else{
     console.log("Usuario não encontrado.");
