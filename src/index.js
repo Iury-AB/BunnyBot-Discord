@@ -330,6 +330,7 @@ app.post('/ataque', async (req, res) => {
     const systemChannel = fetchedGuild.systemChannel;
     channel = systemChannel;
   }
+  console.log(dadosFicha);
   const resultadoAcerto = dadosFicha["resultadoAc"];
   const resultadoDano = dadosFicha["resutadoDano"];
   const bonusAcerto = dadosFicha["Acerto"];
@@ -343,14 +344,14 @@ app.post('/ataque', async (req, res) => {
   let msg;
   //parte sobre o Acerto
   if(rolagemAcerto >= crit || rolagemAcerto == 1){
-    msg = "` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto + ", Ataque" + nomeTeste;
+    msg = "` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto + ", Ataque " + nomeTeste;
     if(rolagemAcerto >= crit){
       msg = ":sparkles: " + msg; 
     }else if(rolagemAcerto == 1){
       msg = ":skull: " + msg;
     }
   }else{
-    msg = "` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto + ", Ataque" + nomeTeste;
+    msg = "` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto + ", Ataque " + nomeTeste;
   }
   const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
 
