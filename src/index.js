@@ -368,6 +368,7 @@ app.post('/ataque', async (req, res) => {
     msg += "\n\n:mag: Dano não encontrado."
   }
   else{
+    console.log(resultadoDano);
     if(rolagemAcerto >= crit){
       msg +=  "\n\n**` " + resultadoDano + " `** ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " crítico! [2*(" + calcDano +")]";
     }else{
