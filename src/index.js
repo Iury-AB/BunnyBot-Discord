@@ -350,7 +350,7 @@ app.post('/ataque', async (req, res) => {
       msg = ":skull: " + msg;
     }
   }else{
-    msg = "` " + resultado + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonus + ", " + nomeTeste;
+    msg = "` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto + ", " + nomeTeste;
   }
   const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
 
