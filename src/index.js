@@ -333,12 +333,8 @@ app.post('/ataque', async (req, res) => {
   console.log(dadosFicha);
   console.log(dadosFicha["resultadoDano"]);
   const resultadoAcerto = parseInt(dadosFicha["resultadoAc"]);
-  const resultadoDano = dadosFicha["resutadoDano"];
   const bonusAcerto = parseInt(dadosFicha["Acerto"]);
-  const nvlDano = parseInt(dadosFicha["Dano"]);
-  const rolDano = dadosFicha["rolagensDano"];
   const calcDano = dadosFicha["Rolagem"];
-  const crit = parseInt(dadosFicha["Crit"]);
   const rolagemAcerto = resultadoAcerto - bonusAcerto;
   const nomeTeste = perIndex;
 
@@ -364,6 +360,12 @@ app.post('/ataque', async (req, res) => {
   }
 
   //parte sobre o dano
+
+  const resultadoDano = dadosFicha["resutadoDano"];
+  const nvlDano = parseInt(dadosFicha["Dano"]);
+  const rolDano = dadosFicha["rolagensDano"];
+  const crit = parseInt(dadosFicha["Crit"]);
+
   if(calcDano == "---"){
     msg += "\n\n:mag: Dano não encontrado."
   }
