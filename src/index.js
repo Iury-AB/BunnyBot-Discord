@@ -332,7 +332,7 @@ app.post('/ataque', async (req, res) => {
   }
   console.log(dadosFicha);
   const resultadoAcerto = parseInt(dadosFicha["resultadoAc"]);
-  const resultadoDano = parseInt(dadosFicha["resutadoDano"]);
+  const resultadoDano = dadosFicha["resutadoDano"];
   const bonusAcerto = parseInt(dadosFicha["Acerto"]);
   const nvlDano = parseInt(dadosFicha["Dano"]);
   const rolDano = dadosFicha["rolagensDano"];
