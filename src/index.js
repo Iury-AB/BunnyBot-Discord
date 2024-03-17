@@ -371,7 +371,7 @@ app.post('/ataque', async (req, res) => {
   else{
     console.log(resultadoDano);
     if(rolagemAcerto >= crit){
-      msg +=  "\n**` " + resultadoDano*2 + " `** ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " crítico! [2*(" + calcDano +")]";
+      msg +=  "\n**` " + resultadoDano + " `** ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " crítico! [2*(" + calcDano +")]";
     }else{
       msg +=  "\n` " + resultadoDano + " ` ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " [" + calcDano +"]";
     }
