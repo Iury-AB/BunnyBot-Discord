@@ -5,8 +5,6 @@ const bodyParser = require('body-parser');
 const { Client, IntentsBitField, Guild, REST, Routes, Permissions, GuildMembers } = require('discord.js');
 const app = express();
 const port = 3000;
-//const mongoose = require('mongoose');
-
 
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -19,29 +17,6 @@ const client = new Client({
     IntentsBitField.Flags.MessageContent,
   ]
 });
-
-/*(async () => {
-  try {
-    await mongoose.connect(process.env.MDBURI);
-    console.log("Connected to DB");
-
-    client.on('ready', (c) => {
-      console.log(`${c.user.tag} is ready.`);
-    });
-    
-    client.on('messageCreate', (msg) =>{
-      if(msg.author.bot){
-        return;
-      }
-    });
-
-    client.login(process.env.TOKEN);
-
-  } catch (error) {
-    console.log(`Error: ${error}`);
-  }
-
-})();*/
 
 // Load the configuration file
 let config = {};
