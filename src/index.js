@@ -169,6 +169,7 @@ app.post('/dano', async (req, res) => {
   const keys = Object.keys(received);
   console.log(keys);
   console.log(values);
+  let newKeys = Object.keys(received);
 
   let perIndex;
   for(var i = 0 ; i < newKeys.length; i++){
