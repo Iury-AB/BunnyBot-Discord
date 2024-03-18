@@ -198,7 +198,7 @@ app.post('/dano', async (req, res) => {
 
   const resultado = dadosFicha["resultadoDano"];
   const nvlDano = dadosFicha["Dano"];
-  const rolagens = dadosFicha["Rolagens"];
+  const rolagens = dadosFicha["rolagensDano"];
   const calcDano = dadosFicha["Dano"];
 
   let msg;
