@@ -426,25 +426,6 @@ app.post('/ataqueNaoDano', async (req, res) => {
   }else{
     console.log("Usuario não encontrado.");
   }
-
-  //parte sobre o dano
-  console.log(dadosFicha);
-  const resultadoDano = dadosFicha["resultadoDano"];
-  const nvlDano = parseInt(dadosFicha["Dano"]);
-  const rolDano = dadosFicha["rolagensDano"];
-  const calcDano = dadosFicha["Rolagem"];
-
-  if(calcDano == "---"){
-    msg += "\n\n:mag: Dano não encontrado."
-  }
-  else{
-    console.log(resultadoDano);
-    if(rolagemAcerto >= crit){
-      msg +=  "\n**` " + resultadoDano + " `** ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " crítico! [2*(" + calcDano +")]";
-    }else{
-      msg +=  "\n` " + resultadoDano + " ` ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " [" + calcDano +"]";
-    }
-  }
   
   await channel.send(msg);
 });
