@@ -199,7 +199,7 @@ app.post('/dano', async (req, res) => {
   const resultado = dadosFicha["resultadoDano"];
   const nvlDano = dadosFicha["Dano"];
   const rolagens = dadosFicha["rolagensDano"];
-  const calcDano = dadosFicha["Dano"];
+  const calcDano = dadosFicha["Rolagem"];
 
   let msg;
   if(calcDano == "---"){
