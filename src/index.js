@@ -4,7 +4,7 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const { Client, IntentsBitField, Guild, REST, Routes, Permissions, GuildMembers } = require('discord.js');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 
 app.use(bodyParser.urlencoded({ extended: true }));
