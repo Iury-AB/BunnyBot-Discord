@@ -457,7 +457,7 @@ client.on('interactionCreate', async (interaction) => {
 
   if(interaction.commandName === 'bind') {
     // Check if the user has permission to manage channels
-    if (!interaction.member.permissions.has(MANAGE_CHANNELS)) {
+    if (!interaction.member.permissions.has((1 << 4))) {
       console.log("Sem permissao");
       return interaction.reply({ content: 'You do not have permission to bind the bot to a channel.', ephemeral: true });
     }
