@@ -3,7 +3,7 @@ const express = require('express');
 const fs = require('fs');
 const keep_alive = require('./keep_alive.js');
 const bodyParser = require('body-parser');
-const { Client, IntentsBitField, Guild, REST, Routes, Permissions, GuildMembers } = require('discord.js');
+const { Client, IntentsBitField, Guild, REST, Routes, Permissions, GuildMembers, PermissionFlagsBits } = require('discord.js');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -457,7 +457,7 @@ client.on('interactionCreate', async (interaction) => {
 
   if(interaction.commandName === 'bind') {
     // Check if the user has permission to manage channels
-    if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+    if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
       console.log("Sem permissao");
       return interaction.reply({ content: 'You do not have permission to bind the bot to a channel.', ephemeral: true });
     }
