@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
-const keep_alive = require('./keep_alive.js');
 const bodyParser = require('body-parser');
 const { Client, IntentsBitField, Guild, REST, Routes, Permissions, GuildMembers, PermissionFlagsBits } = require('discord.js');
 const app = express();
