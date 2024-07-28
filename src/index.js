@@ -107,46 +107,67 @@ const qualDano = function (nivel) {
   switch (nivel) {
     case 1:
       rolagem = "1d4+1";
+      break;
     case 2:
       rolagem = "2d4+2";
+      break;
     case 3:
       rolagem = "3d4+3";
+      break;
     case 4:
       rolagem = "3d6+4";
+      break;
     case 4:
       rolagem = "3d6+4";
+      break;
     case 5:
       rolagem = "4d6+5";
+      break;
     case 6:
       rolagem = "4d8+6";
+      break;
     case 7:
       rolagem = "5d8+7";
+      break;
     case 8:
       rolagem = "5d10+8";
+      break;
     case 9:
       rolagem = "6d10+9";
+      break;
     case 10:
       rolagem = "6d12+9";
+      break;
     case 11:
       rolagem = "7d12+11";
+      break;
     case 12:
       rolagem = "8d12+12";
+      break;
     case 13:
       rolagem = "9d12+13";
+      break;
     case 14:
       rolagem = "10d12+14";
+      break;
     case 15:
       rolagem = "7d20+15";
+      break;
     case 16:
       rolagem = "8d20+16";
+      break;
     case 17:
       rolagem = "9d20+17";
+      break;
     case 18:
       rolagem = "10d20+18";
+      break;
     case 19:
       rolagem = "11d20+19";
+      break;
     case 20:
       rolagem = "12d20+20";
+      break;
   }
 
   return rolagem;
