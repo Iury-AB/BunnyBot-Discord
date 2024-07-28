@@ -117,9 +117,6 @@ const qualDano = function (nivel) {
     case 4:
       rolagem = "3d6+4";
       break;
-    case 4:
-      rolagem = "3d6+4";
-      break;
     case 5:
       rolagem = "4d6+5";
       break;
@@ -136,7 +133,7 @@ const qualDano = function (nivel) {
       rolagem = "6d10+9";
       break;
     case 10:
-      rolagem = "6d12+9";
+      rolagem = "6d12+10";
       break;
     case 11:
       rolagem = "7d12+11";
