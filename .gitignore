@@ -2,3 +2,6 @@
 config.json
 node_modules
 fichas.json
+googleDriveHelper.js
+credentials.json
+token.json
