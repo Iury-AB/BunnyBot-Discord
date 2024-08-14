@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const { Client, IntentsBitField, Guild, REST, Routes, Permissions, GuildMembers, PermissionFlagsBits } = require('discord.js');
 const app = express();
 const port = process.env.PORT || 3000;
+const googleDriveHelper = require('./googleDriveHelper');
 
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -18,20 +19,33 @@ const client = new Client({
   ]
 });
 
-// Load the configuration file
-let config = {};
-try {
-  config = JSON.parse(fs.readFileSync('config.json'));
-} catch (error) {
-  console.error('Error loading configuration file:', error);
+async function loadJsonFromDrive(fileName) {
+  const auth = await googleDriveHelper.authorize();
+  const fileId = await googleDriveHelper.getFileIdByName(auth, fileName);
+  if (fileId) {
+    const tempFilePath = path.join(__dirname, fileName);
+    await googleDriveHelper.downloadFile(auth, fileId, tempFilePath);
+    return JSON.parse(fs.readFileSync(tempFilePath));
+  } else {
+    return {};
+  }
 }
 
-let fichas = {};
-try {
-  fichas = JSON.parse(fs.readFileSync('fichas.json'));
-} catch (error) {
-  console.error('Error loading sheets file:', error);
+async function saveJsonToDrive(fileName, data) {
+  const auth = await googleDriveHelper.authorize();
+  const tempFilePath = path.join(__dirname, fileName);
+  fs.writeFileSync(tempFilePath, JSON.stringify(data, null, 2));
+  const fileId = await googleDriveHelper.getFileIdByName(auth, fileName);
+  if (fileId) {
+    await googleDriveHelper.uploadFile(auth, fileName);
+  } else {
+    await googleDriveHelper.uploadFile(auth, fileName);
+  }
 }
+
+let config = {};
+let fichas = {};
+
 
 client.on('ready', (c) => {
   console.log(`${c.user.tag} is ready.`);
@@ -169,613 +183,625 @@ const qualDano = function (nivel) {
   return rolagem;
 };
 
-// Define a route to handle incoming POST requests
-app.post('/submit-form', async (req, res) => {
-  // Handle incoming form data
-  res.send();
-  console.log(req.body);
-  const reqBody = JSON.stringify(req.body);
-  const received = JSON.parse(reqBody);
-  // Map over the values array and parse each value to an integer
-  const values = Object.values(received).map(value => parseInt(value));
-  let newKeys = Object.keys(received);
-  let perIndex;
-  for (var i = 0; i < newKeys.length; i++) {
-    var index = newKeys[i].indexOf('.');
-    if (newKeys[i][0] == 'V') perIndex = newKeys[i].split('.')[1];
-    newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
-  }
-  const dadosFicha = {};
-  newKeys.forEach((key, index) => {
-    dadosFicha[key] = values[index];
-  });
+(async () => {
+  // Load the JSON files from Google Drive
+  config = await loadJsonFromDrive('config.json');
+  fichas = await loadJsonFromDrive('fichas.json');
 
-  let channelId;
-  let channel;
-  const guildId = received["discordID"]; // server ID
-  const guild = await client.guilds.fetch(guildId);
-
-  if (config.guilds && config.guilds[guildId]) {
-    channelId = config.guilds[guildId]; // channel ID
-    channel = guild.channels.cache.get(channelId);
-  } else {
-    const fetchedGuild = await client.guilds.fetch(guildId);
-    const systemChannel = fetchedGuild.systemChannel;
-    channel = systemChannel;
-  }
-
-  const resultado = dadosFicha["resultado"];
-  const bonus = dadosFicha["ValorPericias"];
-  const rolagem = resultado - bonus;
-  const nomeTeste = qualTeste("ValorPericias." + perIndex);
-
-  // Store the attribute value on the sheets json
-  if (typeof (received["Jogador"]) !== 'undefined') {
-    fichas.dados = fichas.dados || {};
-    fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
-    fichas.dados[received["Jogador"]][nomeTeste] = bonus;
-  }
-
-
-  // Save the updated configuration file
-  fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-
-  let msg;
-  if (rolagem == 20 || rolagem == 1) {
-    msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + nomeTeste;
-    if (rolagem == 20) {
-      msg = ":sparkles: " + msg;
-    } else if (rolagem == 1) {
-      msg = ":skull: " + msg;
+  // Define a route to handle incoming POST requests
+  app.post('/submit-form', async (req, res) => {
+    // Handle incoming form data
+    res.send();
+    console.log(req.body);
+    const reqBody = JSON.stringify(req.body);
+    const received = JSON.parse(reqBody);
+    // Map over the values array and parse each value to an integer
+    const values = Object.values(received).map(value => parseInt(value));
+    let newKeys = Object.keys(received);
+    let perIndex;
+    for (var i = 0; i < newKeys.length; i++) {
+      var index = newKeys[i].indexOf('.');
+      if (newKeys[i][0] == 'V') perIndex = newKeys[i].split('.')[1];
+      newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
     }
-  } else {
-    msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + nomeTeste;
-  }
-  const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
+    const dadosFicha = {};
+    newKeys.forEach((key, index) => {
+      dadosFicha[key] = values[index];
+    });
 
-  sheetUser = cachedUser.first();
-  console.log(received["Jogador"]);
-  if (sheetUser && Object.keys(received).length > 3) {
-    msg = "<@" + sheetUser.id + ">\n" + msg;
-  } else {
-    console.log("Usuario não encontrado.");
-  }
+    let channelId;
+    let channel;
+    const guildId = received["discordID"]; // server ID
+    const guild = await client.guilds.fetch(guildId);
 
-  await channel.send(msg);
-});
-
-app.post('/dano', async (req, res) => {
-  // Handle incoming form data
-  res.send();
-
-  const reqBody = JSON.stringify(req.body);
-  const received = JSON.parse(reqBody);
-  // Map over the values array and parse each value to an integer
-  const values = Object.values(received);
-  const keys = Object.keys(received);
-  console.log(keys);
-  console.log(values);
-  let newKeys = Object.keys(received);
-
-  let perIndex;
-  for (var i = 0; i < newKeys.length; i++) {
-    var index = newKeys[i].indexOf(' ');
-    if (newKeys[i][0] == 'D') perIndex = newKeys[i].split(' ')[1];
-    newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
-  }
-  const dadosFicha = {};
-  newKeys.forEach((key, index) => {
-    dadosFicha[key] = values[index];
-  });
-
-  let channelId;
-  let channel;
-  const guildId = received["discordID"]; // server ID
-  const guild = await client.guilds.fetch(guildId);
-
-  if (config.guilds && config.guilds[guildId]) {
-    channelId = config.guilds[guildId]; // channel ID
-    channel = guild.channels.cache.get(channelId);
-  } else {
-    const fetchedGuild = await client.guilds.fetch(guildId);
-    const systemChannel = fetchedGuild.systemChannel;
-    channel = systemChannel;
-  }
-
-  const resultado = dadosFicha["resultadoDano"];
-  const nvlDano = dadosFicha["Dano"];
-  const rolagens = dadosFicha["rolagensDano"];
-  const calcDano = dadosFicha["Rolagem"];
-
-  let msg;
-  if (calcDano == "---") {
-    msg = ":mag: Dano não encontrado."
-  }
-  else {
-    msg = "` " + resultado + " ` ⟵ `" + rolagens + "` ⟵ Dano " + nvlDano + " [" + calcDano + "]";
-  }
-
-  const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
-
-  sheetUser = cachedUser.first();
-
-  if (sheetUser && Object.keys(received).length > 5) {
-    msg = "<@" + sheetUser.id + ">\n" + msg;
-  } else {
-    console.log("Usuario não encontrado.");
-  }
-
-  await channel.send(msg);
-});
-
-app.post('/habilidade', async (req, res) => {
-  // Handle incoming form data
-  res.send();
-  console.log(req.body);
-  const reqBody = JSON.stringify(req.body);
-  const received = JSON.parse(reqBody);
-  // Map over the values array and parse each value to an integer
-  const values = Object.values(received).map(value => parseInt(value));
-  let newKeys = Object.keys(received);
-  let perIndex;
-  for (var i = 0; i < newKeys.length; i++) {
-    var index = newKeys[i].indexOf('.');
-    if (newKeys[i][0] == 'r') perIndex = newKeys[i].split('.')[1];
-    newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
-  }
-  const dadosFicha = {};
-  newKeys.forEach((key, index) => {
-    dadosFicha[key] = values[index];
-  });
-
-  let channelId;
-  let channel;
-  const guildId = received["discordID"]; // server ID
-  const guild = await client.guilds.fetch(guildId);
-
-
-
-  if (config.guilds && config.guilds[guildId]) {
-    channelId = config.guilds[guildId]; // channel ID
-    channel = guild.channels.cache.get(channelId);
-  } else {
-    const fetchedGuild = await client.guilds.fetch(guildId);
-    const systemChannel = fetchedGuild.systemChannel;
-    channel = systemChannel;
-  }
-  const resultado = dadosFicha["resultado"];
-  const bonus = dadosFicha["Hab"];
-  const rolagem = resultado - bonus;
-  const nomeTeste = perIndex;
-
-  // Store the attribute value on the sheets json
-  if (typeof (received["Jogador"]) !== 'undefined') {
-    fichas.dados = fichas.dados || {};
-    fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
-    fichas.dados[received["Jogador"]][nomeTeste] = bonus;
-  }
-
-
-  // Save the updated configuration file
-  fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-
-  let msg;
-  if (rolagem == 20 || rolagem == 1) {
-    msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + nomeTeste;
-    if (rolagem == 20) {
-      msg = ":sparkles: " + msg;
-    } else if (rolagem == 1) {
-      msg = ":skull: " + msg;
-    }
-  } else {
-    msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + nomeTeste;
-  }
-  const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
-
-  sheetUser = cachedUser.first();
-  console.log(received["Jogador"]);
-  if (sheetUser && Object.keys(received).length > 3) {
-    msg = "<@" + sheetUser.id + ">\n" + msg;
-  } else {
-    console.log("Usuario não encontrado.");
-  }
-
-  await channel.send(msg);
-});
-
-app.post('/ataque', async (req, res) => {
-  // Handle incoming form data
-  res.send();
-  console.log(req.body);
-  const reqBody = JSON.stringify(req.body);
-  const received = JSON.parse(reqBody);
-  // Map over the values array and parse each value to an integer
-  const values = Object.values(received);
-  let newKeys = Object.keys(received);
-  let perIndex;
-  for (var i = 0; i < newKeys.length; i++) {
-    var index = newKeys[i].indexOf(' ');
-    if (newKeys[i][0] == 'A') perIndex = newKeys[i].split(' ')[1];
-    newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
-  }
-  const dadosFicha = {};
-  newKeys.forEach((key, index) => {
-    dadosFicha[key] = values[index];
-  });
-
-  let channelId;
-  let channel;
-  const guildId = received["discordID"]; // server ID
-  const guild = await client.guilds.fetch(guildId);
-
-  if (config.guilds && config.guilds[guildId]) {
-    channelId = config.guilds[guildId]; // channel ID
-    channel = guild.channels.cache.get(channelId);
-  } else {
-    const fetchedGuild = await client.guilds.fetch(guildId);
-    const systemChannel = fetchedGuild.systemChannel;
-    channel = systemChannel;
-  }
-  console.log(dadosFicha);
-  const resultadoAcerto = parseInt(dadosFicha["resultadoAc"]);
-  const bonusAcerto = parseInt(dadosFicha["Acerto"]);
-  const crit = parseInt(dadosFicha["Crit"]);
-  const rolagemAcerto = resultadoAcerto - bonusAcerto;
-  const nomeTeste = perIndex;
-
-  // Store the attribute value on the sheets json
-  if (typeof (received["Jogador"]) !== 'undefined') {
-    fichas.dados = fichas.dados || {};
-    fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
-    fichas.dados[received["Jogador"]][nomeTeste] = bonusAcerto;
-  }
-
-  // Save the updated configuration file
-  fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-
-  let msg;
-  //parte sobre o Acerto
-  if (rolagemAcerto >= crit || rolagemAcerto == 1) {
-    msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto;
-    if (rolagemAcerto >= crit) {
-      msg = ":sparkles: " + msg;
-    } else if (rolagemAcerto == 1) {
-      msg = ":skull: " + msg;
-    }
-  } else {
-    msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto;
-  }
-  const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
-
-  sheetUser = cachedUser.first();
-  if (sheetUser && Object.keys(received).length > 8) {
-    msg = "<@" + sheetUser.id + ">\n" + msg;
-  } else {
-    console.log("Usuario não encontrado.");
-  }
-
-  //parte sobre o dano
-  console.log(dadosFicha);
-  const resultadoDano = dadosFicha["resultadoDano"];
-  const nvlDano = parseInt(dadosFicha["Dano"]);
-  const rolDano = dadosFicha["rolagensDano"];
-  const calcDano = dadosFicha["Rolagem"];
-
-  if (calcDano == "---") {
-    msg += "\n\n:mag: Dano não encontrado."
-  }
-  else {
-    console.log(resultadoDano);
-    if (rolagemAcerto >= crit) {
-      msg += "\n**` " + resultadoDano + " `** ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " crítico! [2*(" + calcDano + ")]";
+    if (config.guilds && config.guilds[guildId]) {
+      channelId = config.guilds[guildId]; // channel ID
+      channel = guild.channels.cache.get(channelId);
     } else {
-      msg += "\n` " + resultadoDano + " ` ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " [" + calcDano + "]";
+      const fetchedGuild = await client.guilds.fetch(guildId);
+      const systemChannel = fetchedGuild.systemChannel;
+      channel = systemChannel;
     }
-  }
 
-  await channel.send(msg);
-});
+    const resultado = dadosFicha["resultado"];
+    const bonus = dadosFicha["ValorPericias"];
+    const rolagem = resultado - bonus;
+    const nomeTeste = qualTeste("ValorPericias." + perIndex);
 
-app.post('/ataqueNaoDano', async (req, res) => {
-  // Handle incoming form data
-  res.send();
-  console.log(req.body);
-  const reqBody = JSON.stringify(req.body);
-  const received = JSON.parse(reqBody);
-  // Map over the values array and parse each value to an integer
-  const values = Object.values(received);
-  let newKeys = Object.keys(received);
-  let perIndex;
-  for (var i = 0; i < newKeys.length; i++) {
-    var index = newKeys[i].indexOf(' ');
-    if (newKeys[i][0] == 'A') perIndex = newKeys[i].split(' ')[1];
-    newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
-  }
-  const dadosFicha = {};
-  newKeys.forEach((key, index) => {
-    dadosFicha[key] = values[index];
-  });
-
-  let channelId;
-  let channel;
-  const guildId = received["discordID"]; // server ID
-  const guild = await client.guilds.fetch(guildId);
-
-  if (config.guilds && config.guilds[guildId]) {
-    channelId = config.guilds[guildId]; // channel ID
-    channel = guild.channels.cache.get(channelId);
-  } else {
-    const fetchedGuild = await client.guilds.fetch(guildId);
-    const systemChannel = fetchedGuild.systemChannel;
-    channel = systemChannel;
-  }
-  console.log(dadosFicha);
-  const resultadoAcerto = parseInt(dadosFicha["resultadoAc"]);
-  const bonusAcerto = parseInt(dadosFicha["Acerto"]);
-  const crit = parseInt(dadosFicha["Crit"]);
-  const rolagemAcerto = resultadoAcerto - bonusAcerto;
-  const nomeTeste = perIndex;
-
-  // Store the attribute value on the sheets json
-  if (typeof (received["Jogador"]) !== 'undefined') {
-    fichas.dados = fichas.dados || {};
-    fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
-    fichas.dados[received["Jogador"]][nomeTeste] = bonusAcerto;
-  }
-
-  // Save the updated configuration file
-  fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-
-  let msg;
-  //parte sobre o Acerto
-  if (rolagemAcerto >= crit || rolagemAcerto == 1) {
-    msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto;
-    if (rolagemAcerto >= crit) {
-      msg = ":sparkles: " + msg;
-    } else if (rolagemAcerto == 1) {
-      msg = ":skull: " + msg;
+    // Store the attribute value on the sheets json
+    if (typeof (received["Jogador"]) !== 'undefined') {
+      fichas.dados = fichas.dados || {};
+      fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
+      fichas.dados[received["Jogador"]][nomeTeste] = bonus;
     }
-  } else {
-    msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto;
-  }
-  const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
 
-  sheetUser = cachedUser.first();
-  if (sheetUser && Object.keys(received).length > 4) {
-    msg = "<@" + sheetUser.id + ">\n" + msg;
-  } else {
-    console.log("Usuario não encontrado.");
-  }
-
-  await channel.send(msg);
-});
-
-client.on('guildCreate', async guild => {
-  const systemChannel = guild.systemChannel;
-  if (systemChannel) {
-
-  } else {
-    console.log("erro");
-  }
-
-});
-
-client.on('guildDelete', (guild) => {
-  // Remove the guild's configuration from the config object
-  delete config.guilds[guild.id];
-
-  // Save the updated configuration file
-  fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-
-  console.log(`Removed configuration for guild ${guild.name} (${guild.id})`);
-});
-
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-
-  if (interaction.commandName === 'bind') {
-    // Check if the user has permission to manage channels
-    if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
-      console.log("Sem permissao");
-      return interaction.reply({ content: 'Eu não te obedeço.', ephemeral: true });
-    }
-    const channelOption = interaction.options.getChannel('canal');
-
-    // Store the ID of the specified channel in the configuration file
-    config.guilds = config.guilds || {};
-    config.guilds[interaction.guild.id] = channelOption.id;
-
-    await interaction.reply("Ok, ficarei aí.");
 
     // Save the updated configuration file
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-    console.log("Mudei de canal");
+    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
 
-  }
-  else if (interaction.commandName === 'teste-perícias') {
-    const pericia = interaction.options.getString('pericias');
-
-    member = interaction.member.user.username;
-    console.log(member);
-    console.log(pericia);
-
-    if (fichas.dados && fichas.dados[member] && (pericia in fichas.dados[member])) {
-      var bonus = fichas.dados[member][pericia];
-      var rolagem = Math.floor(Math.random() * 20) + 1;
-      var resultado = rolagem + bonus;
-
-      let msg;
-      if (rolagem == 20 || rolagem == 1) {
-        msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + pericia;
-        if (rolagem == 20) {
-          msg = ":sparkles: " + msg;
-        } else if (rolagem == 1) {
-          msg = ":skull: " + msg;
-        }
-      } else {
-        msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + pericia;
-      }
-
-      let sheetUser = interaction.member.user;
-      if (sheetUser) {
-        msg = "<@" + sheetUser.id + ">\n" + msg;
-      } else {
-        console.log("Usuario não encontrado.");
-      }
-
-      let guildId = interaction.guild.id;
-      let channelId;
-      let channel;
-      if (config.guilds && config.guilds[guildId]) {
-        channelId = config.guilds[guildId]; // channel ID
-        channel = interaction.guild.channels.cache.get(channelId);
-        interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
-        await channel.send(msg);
-      } else {
-        interaction.reply(msg);
-      }
-
-    } else {
-      return interaction.reply({ content: 'Você ainda não fez esse teste com sua ficha.', ephemeral: true });
-    }
-  }
-  else if (interaction.commandName === 'teste-habilidades') {
-    const habilidade = interaction.options.getString('habilidades');
-
-    member = interaction.member.user.username;
-    console.log(member);
-    console.log(habilidade);
-
-    if (fichas.dados && fichas.dados[member] && (habilidade in fichas.dados[member])) {
-      var bonus = fichas.dados[member][habilidade];
-      var rolagem = Math.floor(Math.random() * 20) + 1;
-      var resultado = rolagem + bonus;
-
-      let msg;
-      if (rolagem == 20 || rolagem == 1) {
-        msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + habilidade;
-        if (rolagem == 20) {
-          msg = ":sparkles: " + msg;
-        } else if (rolagem == 1) {
-          msg = ":skull: " + msg;
-        }
-      } else {
-        msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + habilidade;
-      }
-
-      let sheetUser = interaction.member.user;
-      if (sheetUser) {
-        msg = "<@" + sheetUser.id + ">\n" + msg;
-      } else {
-        console.log("Usuario não encontrado.");
-      }
-
-      let guildId = interaction.guild.id;
-      let channelId;
-      let channel;
-      if (config.guilds && config.guilds[guildId]) {
-        channelId = config.guilds[guildId]; // channel ID
-        channel = interaction.guild.channels.cache.get(channelId);
-        interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
-        await channel.send(msg);
-      } else {
-        interaction.reply(msg);
+    let msg;
+    if (rolagem == 20 || rolagem == 1) {
+      msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + nomeTeste;
+      if (rolagem == 20) {
+        msg = ":sparkles: " + msg;
+      } else if (rolagem == 1) {
+        msg = ":skull: " + msg;
       }
     } else {
-      return interaction.reply({ content: 'Você ainda não fez esse teste com sua ficha.', ephemeral: true });
+      msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + nomeTeste;
     }
-  }
-  else if (interaction.commandName === 'teste-defesa') {
-    const defesa = interaction.options.getString('defesas');
+    const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
 
-    member = interaction.member.user.username;
-    console.log(member);
-    console.log(defesa);
-
-    if (fichas.dados && fichas.dados[member] && (defesa in fichas.dados[memebr])) {
-      var bonus = fichas.dados[member][defesa];
-      var rolagem = Math.floor(Math.random() * 20) + 1;
-      var resultado = rolagem + bonus;
-
-      let msg;
-      if (rolagem == 20 || rolagem == 1) {
-        msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + defesa;
-        if (rolagem == 20) {
-          msg = ":sparkles: " + msg;
-        } else if (rolagem == 1) {
-          msg = ":skull: " + msg;
-        }
-      } else {
-        msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + defesa;
-      }
-
-      let sheetUser = interaction.member.user;
-      if (sheetUser) {
-        msg = "<@" + sheetUser.id + ">\n" + msg;
-      } else {
-        console.log("Usuario não encontrado.");
-      }
-
-      let guildId = interaction.guild.id;
-      let channelId;
-      let channel;
-      if (config.guilds && config.guilds[guildId]) {
-        channelId = config.guilds[guildId]; // channel ID
-        channel = interaction.guild.channels.cache.get(channelId);
-        interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
-        await channel.send(msg);
-      } else {
-        interaction.reply(msg);
-      }
-    } else {
-      return interaction.reply({ content: 'Você ainda não fez esse teste com sua ficha.', ephemeral: true });
-    }
-  }
-  else if (interaction.commandName === 'teste-dano') {
-    const nivel_dano = interaction.options.getInteger('dano');
-    member = interaction.member.user.username;
-    console.log(member);
-    console.log(nivel_dano);
-
-    var rolagem = qualDano(nivel_dano);
-    var parts = rolagem.split(/d|\+/);
-    var nDados = parseInt(parts[0]);
-    var dado = parseInt(parts[1]);
-    var bonus = parseInt(parts[2]);
-    let somaDados = 0;
-
-    // rolar o dano
-    var rolls = [];
-    for (var n = 0; n < nDados; n++) {
-      var thisDado = Math.floor(Math.random() * dado) + 1;
-      somaDados += thisDado;
-      rolls.push(thisDado);
-    }
-    var rolagens = rolls.join(", ");
-    somaDados += bonus;
-
-    let msg = "` " + somaDados + " ` ⟵ `" + rolagens + "` ⟵ Dano " + nivel_dano + " [" + rolagem + "]";
-    
-    let sheetUser = interaction.member.user;
-    if (sheetUser) {
+    sheetUser = cachedUser.first();
+    console.log(received["Jogador"]);
+    if (sheetUser && Object.keys(received).length > 3) {
       msg = "<@" + sheetUser.id + ">\n" + msg;
     } else {
       console.log("Usuario não encontrado.");
     }
 
-    let guildId = interaction.guild.id;
+    await channel.send(msg);
+  });
+
+  app.post('/dano', async (req, res) => {
+    // Handle incoming form data
+    res.send();
+
+    const reqBody = JSON.stringify(req.body);
+    const received = JSON.parse(reqBody);
+    // Map over the values array and parse each value to an integer
+    const values = Object.values(received);
+    const keys = Object.keys(received);
+    console.log(keys);
+    console.log(values);
+    let newKeys = Object.keys(received);
+
+    let perIndex;
+    for (var i = 0; i < newKeys.length; i++) {
+      var index = newKeys[i].indexOf(' ');
+      if (newKeys[i][0] == 'D') perIndex = newKeys[i].split(' ')[1];
+      newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
+    }
+    const dadosFicha = {};
+    newKeys.forEach((key, index) => {
+      dadosFicha[key] = values[index];
+    });
+
     let channelId;
     let channel;
+    const guildId = received["discordID"]; // server ID
+    const guild = await client.guilds.fetch(guildId);
+
     if (config.guilds && config.guilds[guildId]) {
       channelId = config.guilds[guildId]; // channel ID
-      channel = interaction.guild.channels.cache.get(channelId);
-      interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
-      await channel.send(msg);
+      channel = guild.channels.cache.get(channelId);
     } else {
-      interaction.reply(msg);
+      const fetchedGuild = await client.guilds.fetch(guildId);
+      const systemChannel = fetchedGuild.systemChannel;
+      channel = systemChannel;
     }
-  }
-});
+
+    const resultado = dadosFicha["resultadoDano"];
+    const nvlDano = dadosFicha["Dano"];
+    const rolagens = dadosFicha["rolagensDano"];
+    const calcDano = dadosFicha["Rolagem"];
+
+    let msg;
+    if (calcDano == "---") {
+      msg = ":mag: Dano não encontrado."
+    }
+    else {
+      msg = "` " + resultado + " ` ⟵ `" + rolagens + "` ⟵ Dano " + nvlDano + " [" + calcDano + "]";
+    }
+
+    const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
+
+    sheetUser = cachedUser.first();
+
+    if (sheetUser && Object.keys(received).length > 5) {
+      msg = "<@" + sheetUser.id + ">\n" + msg;
+    } else {
+      console.log("Usuario não encontrado.");
+    }
+
+    await channel.send(msg);
+  });
+
+  app.post('/habilidade', async (req, res) => {
+    // Handle incoming form data
+    res.send();
+    console.log(req.body);
+    const reqBody = JSON.stringify(req.body);
+    const received = JSON.parse(reqBody);
+    // Map over the values array and parse each value to an integer
+    const values = Object.values(received).map(value => parseInt(value));
+    let newKeys = Object.keys(received);
+    let perIndex;
+    for (var i = 0; i < newKeys.length; i++) {
+      var index = newKeys[i].indexOf('.');
+      if (newKeys[i][0] == 'r') perIndex = newKeys[i].split('.')[1];
+      newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
+    }
+    const dadosFicha = {};
+    newKeys.forEach((key, index) => {
+      dadosFicha[key] = values[index];
+    });
+
+    let channelId;
+    let channel;
+    const guildId = received["discordID"]; // server ID
+    const guild = await client.guilds.fetch(guildId);
+
+
+
+    if (config.guilds && config.guilds[guildId]) {
+      channelId = config.guilds[guildId]; // channel ID
+      channel = guild.channels.cache.get(channelId);
+    } else {
+      const fetchedGuild = await client.guilds.fetch(guildId);
+      const systemChannel = fetchedGuild.systemChannel;
+      channel = systemChannel;
+    }
+    const resultado = dadosFicha["resultado"];
+    const bonus = dadosFicha["Hab"];
+    const rolagem = resultado - bonus;
+    const nomeTeste = perIndex;
+
+    // Store the attribute value on the sheets json
+    if (typeof (received["Jogador"]) !== 'undefined') {
+      fichas.dados = fichas.dados || {};
+      fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
+      fichas.dados[received["Jogador"]][nomeTeste] = bonus;
+    }
+
+
+    // Save the updated configuration file
+    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
+
+    let msg;
+    if (rolagem == 20 || rolagem == 1) {
+      msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + nomeTeste;
+      if (rolagem == 20) {
+        msg = ":sparkles: " + msg;
+      } else if (rolagem == 1) {
+        msg = ":skull: " + msg;
+      }
+    } else {
+      msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + nomeTeste;
+    }
+    const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
+
+    sheetUser = cachedUser.first();
+    console.log(received["Jogador"]);
+    if (sheetUser && Object.keys(received).length > 3) {
+      msg = "<@" + sheetUser.id + ">\n" + msg;
+    } else {
+      console.log("Usuario não encontrado.");
+    }
+
+    await channel.send(msg);
+  });
+
+  app.post('/ataque', async (req, res) => {
+    // Handle incoming form data
+    res.send();
+    console.log(req.body);
+    const reqBody = JSON.stringify(req.body);
+    const received = JSON.parse(reqBody);
+    // Map over the values array and parse each value to an integer
+    const values = Object.values(received);
+    let newKeys = Object.keys(received);
+    let perIndex;
+    for (var i = 0; i < newKeys.length; i++) {
+      var index = newKeys[i].indexOf(' ');
+      if (newKeys[i][0] == 'A') perIndex = newKeys[i].split(' ')[1];
+      newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
+    }
+    const dadosFicha = {};
+    newKeys.forEach((key, index) => {
+      dadosFicha[key] = values[index];
+    });
+
+    let channelId;
+    let channel;
+    const guildId = received["discordID"]; // server ID
+    const guild = await client.guilds.fetch(guildId);
+
+    if (config.guilds && config.guilds[guildId]) {
+      channelId = config.guilds[guildId]; // channel ID
+      channel = guild.channels.cache.get(channelId);
+    } else {
+      const fetchedGuild = await client.guilds.fetch(guildId);
+      const systemChannel = fetchedGuild.systemChannel;
+      channel = systemChannel;
+    }
+    console.log(dadosFicha);
+    const resultadoAcerto = parseInt(dadosFicha["resultadoAc"]);
+    const bonusAcerto = parseInt(dadosFicha["Acerto"]);
+    const crit = parseInt(dadosFicha["Crit"]);
+    const rolagemAcerto = resultadoAcerto - bonusAcerto;
+    const nomeTeste = perIndex;
+
+    // Store the attribute value on the sheets json
+    if (typeof (received["Jogador"]) !== 'undefined') {
+      fichas.dados = fichas.dados || {};
+      fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
+      fichas.dados[received["Jogador"]][nomeTeste] = bonusAcerto;
+    }
+
+    // Save the updated configuration file
+    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
+
+    let msg;
+    //parte sobre o Acerto
+    if (rolagemAcerto >= crit || rolagemAcerto == 1) {
+      msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto;
+      if (rolagemAcerto >= crit) {
+        msg = ":sparkles: " + msg;
+      } else if (rolagemAcerto == 1) {
+        msg = ":skull: " + msg;
+      }
+    } else {
+      msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto;
+    }
+    const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
+
+    sheetUser = cachedUser.first();
+    if (sheetUser && Object.keys(received).length > 8) {
+      msg = "<@" + sheetUser.id + ">\n" + msg;
+    } else {
+      console.log("Usuario não encontrado.");
+    }
+
+    //parte sobre o dano
+    console.log(dadosFicha);
+    const resultadoDano = dadosFicha["resultadoDano"];
+    const nvlDano = parseInt(dadosFicha["Dano"]);
+    const rolDano = dadosFicha["rolagensDano"];
+    const calcDano = dadosFicha["Rolagem"];
+
+    if (calcDano == "---") {
+      msg += "\n\n:mag: Dano não encontrado."
+    }
+    else {
+      console.log(resultadoDano);
+      if (rolagemAcerto >= crit) {
+        msg += "\n**` " + resultadoDano + " `** ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " crítico! [2*(" + calcDano + ")]";
+      } else {
+        msg += "\n` " + resultadoDano + " ` ⟵ `" + rolDano + "` ⟵ Dano " + nvlDano + " [" + calcDano + "]";
+      }
+    }
+
+    await channel.send(msg);
+  });
+
+  app.post('/ataqueNaoDano', async (req, res) => {
+    // Handle incoming form data
+    res.send();
+    console.log(req.body);
+    const reqBody = JSON.stringify(req.body);
+    const received = JSON.parse(reqBody);
+    // Map over the values array and parse each value to an integer
+    const values = Object.values(received);
+    let newKeys = Object.keys(received);
+    let perIndex;
+    for (var i = 0; i < newKeys.length; i++) {
+      var index = newKeys[i].indexOf(' ');
+      if (newKeys[i][0] == 'A') perIndex = newKeys[i].split(' ')[1];
+      newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
+    }
+    const dadosFicha = {};
+    newKeys.forEach((key, index) => {
+      dadosFicha[key] = values[index];
+    });
+
+    let channelId;
+    let channel;
+    const guildId = received["discordID"]; // server ID
+    const guild = await client.guilds.fetch(guildId);
+
+    if (config.guilds && config.guilds[guildId]) {
+      channelId = config.guilds[guildId]; // channel ID
+      channel = guild.channels.cache.get(channelId);
+    } else {
+      const fetchedGuild = await client.guilds.fetch(guildId);
+      const systemChannel = fetchedGuild.systemChannel;
+      channel = systemChannel;
+    }
+    console.log(dadosFicha);
+    const resultadoAcerto = parseInt(dadosFicha["resultadoAc"]);
+    const bonusAcerto = parseInt(dadosFicha["Acerto"]);
+    const crit = parseInt(dadosFicha["Crit"]);
+    const rolagemAcerto = resultadoAcerto - bonusAcerto;
+    const nomeTeste = perIndex;
+
+    // Store the attribute value on the sheets json
+    if (typeof (received["Jogador"]) !== 'undefined') {
+      fichas.dados = fichas.dados || {};
+      fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
+      fichas.dados[received["Jogador"]][nomeTeste] = bonusAcerto;
+    }
+
+    // Save the updated configuration file
+    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
+
+    let msg;
+    //parte sobre o Acerto
+    if (rolagemAcerto >= crit || rolagemAcerto == 1) {
+      msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto;
+      if (rolagemAcerto >= crit) {
+        msg = ":sparkles: " + msg;
+      } else if (rolagemAcerto == 1) {
+        msg = ":skull: " + msg;
+      }
+    } else {
+      msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto;
+    }
+    const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
+
+    sheetUser = cachedUser.first();
+    if (sheetUser && Object.keys(received).length > 4) {
+      msg = "<@" + sheetUser.id + ">\n" + msg;
+    } else {
+      console.log("Usuario não encontrado.");
+    }
+
+    await channel.send(msg);
+  });
+
+  client.on('guildCreate', async guild => {
+    const systemChannel = guild.systemChannel;
+    if (systemChannel) {
+
+    } else {
+      console.log("erro");
+    }
+
+  });
+
+  client.on('guildDelete', (guild) => {
+    // Remove the guild's configuration from the config object
+    delete config.guilds[guild.id];
+
+    // Save the updated configuration file
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+
+    console.log(`Removed configuration for guild ${guild.name} (${guild.id})`);
+  });
+
+  client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+
+    if (interaction.commandName === 'bind') {
+      // Check if the user has permission to manage channels
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
+        console.log("Sem permissao");
+        return interaction.reply({ content: 'Eu não te obedeço.', ephemeral: true });
+      }
+      const channelOption = interaction.options.getChannel('canal');
+
+      // Store the ID of the specified channel in the configuration file
+      config.guilds = config.guilds || {};
+      config.guilds[interaction.guild.id] = channelOption.id;
+
+      await interaction.reply("Ok, ficarei aí.");
+
+      // Save the updated configuration file
+      fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+      console.log("Mudei de canal");
+
+    }
+    else if (interaction.commandName === 'teste-perícias') {
+      const pericia = interaction.options.getString('pericias');
+
+      member = interaction.member.user.username;
+      console.log(member);
+      console.log(pericia);
+
+      if (fichas.dados && fichas.dados[member] && (pericia in fichas.dados[member])) {
+        var bonus = fichas.dados[member][pericia];
+        var rolagem = Math.floor(Math.random() * 20) + 1;
+        var resultado = rolagem + bonus;
+
+        let msg;
+        if (rolagem == 20 || rolagem == 1) {
+          msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + pericia;
+          if (rolagem == 20) {
+            msg = ":sparkles: " + msg;
+          } else if (rolagem == 1) {
+            msg = ":skull: " + msg;
+          }
+        } else {
+          msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + pericia;
+        }
+
+        let sheetUser = interaction.member.user;
+        if (sheetUser) {
+          msg = "<@" + sheetUser.id + ">\n" + msg;
+        } else {
+          console.log("Usuario não encontrado.");
+        }
+
+        let guildId = interaction.guild.id;
+        let channelId;
+        let channel;
+        if (config.guilds && config.guilds[guildId]) {
+          channelId = config.guilds[guildId]; // channel ID
+          channel = interaction.guild.channels.cache.get(channelId);
+          interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
+          await channel.send(msg);
+        } else {
+          interaction.reply(msg);
+        }
+
+      } else {
+        return interaction.reply({ content: 'Você ainda não fez esse teste com sua ficha.', ephemeral: true });
+      }
+    }
+    else if (interaction.commandName === 'teste-habilidades') {
+      const habilidade = interaction.options.getString('habilidades');
+
+      member = interaction.member.user.username;
+      console.log(member);
+      console.log(habilidade);
+
+      if (fichas.dados && fichas.dados[member] && (habilidade in fichas.dados[member])) {
+        var bonus = fichas.dados[member][habilidade];
+        var rolagem = Math.floor(Math.random() * 20) + 1;
+        var resultado = rolagem + bonus;
+
+        let msg;
+        if (rolagem == 20 || rolagem == 1) {
+          msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + habilidade;
+          if (rolagem == 20) {
+            msg = ":sparkles: " + msg;
+          } else if (rolagem == 1) {
+            msg = ":skull: " + msg;
+          }
+        } else {
+          msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + habilidade;
+        }
+
+        let sheetUser = interaction.member.user;
+        if (sheetUser) {
+          msg = "<@" + sheetUser.id + ">\n" + msg;
+        } else {
+          console.log("Usuario não encontrado.");
+        }
+
+        let guildId = interaction.guild.id;
+        let channelId;
+        let channel;
+        if (config.guilds && config.guilds[guildId]) {
+          channelId = config.guilds[guildId]; // channel ID
+          channel = interaction.guild.channels.cache.get(channelId);
+          interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
+          await channel.send(msg);
+        } else {
+          interaction.reply(msg);
+        }
+      } else {
+        return interaction.reply({ content: 'Você ainda não fez esse teste com sua ficha.', ephemeral: true });
+      }
+    }
+    else if (interaction.commandName === 'teste-defesa') {
+      const defesa = interaction.options.getString('defesas');
+
+      member = interaction.member.user.username;
+      console.log(member);
+      console.log(defesa);
+
+      if (fichas.dados && fichas.dados[member] && (defesa in fichas.dados[memebr])) {
+        var bonus = fichas.dados[member][defesa];
+        var rolagem = Math.floor(Math.random() * 20) + 1;
+        var resultado = rolagem + bonus;
+
+        let msg;
+        if (rolagem == 20 || rolagem == 1) {
+          msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + defesa;
+          if (rolagem == 20) {
+            msg = ":sparkles: " + msg;
+          } else if (rolagem == 1) {
+            msg = ":skull: " + msg;
+          }
+        } else {
+          msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + defesa;
+        }
+
+        let sheetUser = interaction.member.user;
+        if (sheetUser) {
+          msg = "<@" + sheetUser.id + ">\n" + msg;
+        } else {
+          console.log("Usuario não encontrado.");
+        }
+
+        let guildId = interaction.guild.id;
+        let channelId;
+        let channel;
+        if (config.guilds && config.guilds[guildId]) {
+          channelId = config.guilds[guildId]; // channel ID
+          channel = interaction.guild.channels.cache.get(channelId);
+          interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
+          await channel.send(msg);
+        } else {
+          interaction.reply(msg);
+        }
+      } else {
+        return interaction.reply({ content: 'Você ainda não fez esse teste com sua ficha.', ephemeral: true });
+      }
+    }
+    else if (interaction.commandName === 'teste-dano') {
+      const nivel_dano = interaction.options.getInteger('dano');
+      member = interaction.member.user.username;
+      console.log(member);
+      console.log(nivel_dano);
+
+      var rolagem = qualDano(nivel_dano);
+      var parts = rolagem.split(/d|\+/);
+      var nDados = parseInt(parts[0]);
+      var dado = parseInt(parts[1]);
+      var bonus = parseInt(parts[2]);
+      let somaDados = 0;
+
+      // rolar o dano
+      var rolls = [];
+      for (var n = 0; n < nDados; n++) {
+        var thisDado = Math.floor(Math.random() * dado) + 1;
+        somaDados += thisDado;
+        rolls.push(thisDado);
+      }
+      var rolagens = rolls.join(", ");
+      somaDados += bonus;
+
+      let msg = "` " + somaDados + " ` ⟵ `" + rolagens + "` ⟵ Dano " + nivel_dano + " [" + rolagem + "]";
+
+      let sheetUser = interaction.member.user;
+      if (sheetUser) {
+        msg = "<@" + sheetUser.id + ">\n" + msg;
+      } else {
+        console.log("Usuario não encontrado.");
+      }
+
+      let guildId = interaction.guild.id;
+      let channelId;
+      let channel;
+      if (config.guilds && config.guilds[guildId]) {
+        channelId = config.guilds[guildId]; // channel ID
+        channel = interaction.guild.channels.cache.get(channelId);
+        interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
+        await channel.send(msg);
+      } else {
+        interaction.reply(msg);
+      }
+    }
+  });
+
+
+
+  await saveJsonToDrive('config.json', config);
+  await saveJsonToDrive('fichas.json', fichas);
+})();
+
 
 
 // Start the server
