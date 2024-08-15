@@ -239,11 +239,6 @@ const qualDano = function (nivel) {
       fichas.dados[received["Jogador"]][nomeTeste] = bonus;
     }
 
-
-    // Save the updated configuration file
-    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-    await saveJsonToDrive('fichas.json', fichas);
-
     let msg;
     if (rolagem == 20 || rolagem == 1) {
       msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + nomeTeste;
@@ -266,6 +261,10 @@ const qualDano = function (nivel) {
     }
 
     await channel.send(msg);
+
+    // Save the updated configuration file
+    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
+    await saveJsonToDrive('fichas.json', fichas);
   });
 
   app.post('/dano', async (req, res) => {
@@ -378,11 +377,6 @@ const qualDano = function (nivel) {
       fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
       fichas.dados[received["Jogador"]][nomeTeste] = bonus;
     }
-
-
-    // Save the updated configuration file
-    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-    await saveJsonToDrive('fichas.json', fichas);
     
     let msg;
     if (rolagem == 20 || rolagem == 1) {
@@ -406,6 +400,10 @@ const qualDano = function (nivel) {
     }
 
     await channel.send(msg);
+
+    // Save the updated configuration file
+    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
+    await saveJsonToDrive('fichas.json', fichas);
   });
 
   app.post('/ataque', async (req, res) => {
@@ -455,10 +453,6 @@ const qualDano = function (nivel) {
       fichas.dados[received["Jogador"]][nomeTeste] = bonusAcerto;
     }
 
-    // Save the updated configuration file
-    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-    await saveJsonToDrive('fichas.json', fichas);
-
     let msg;
     //parte sobre o Acerto
     if (rolagemAcerto >= crit || rolagemAcerto == 1) {
@@ -500,6 +494,11 @@ const qualDano = function (nivel) {
     }
 
     await channel.send(msg);
+
+    // Save the updated configuration file
+    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
+    await saveJsonToDrive('fichas.json', fichas);
+
   });
 
   app.post('/ataqueNaoDano', async (req, res) => {
@@ -549,10 +548,6 @@ const qualDano = function (nivel) {
       fichas.dados[received["Jogador"]][nomeTeste] = bonusAcerto;
     }
 
-    // Save the updated configuration file
-    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-    await saveJsonToDrive('fichas.json', fichas);
-
     let msg;
     //parte sobre o Acerto
     if (rolagemAcerto >= crit || rolagemAcerto == 1) {
@@ -575,6 +570,10 @@ const qualDano = function (nivel) {
     }
 
     await channel.send(msg);
+
+    // Save the updated configuration file
+    fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
+    await saveJsonToDrive('fichas.json', fichas);
   });
 
   client.on('guildCreate', async guild => {
@@ -613,7 +612,7 @@ const qualDano = function (nivel) {
       config.guilds = config.guilds || {};
       config.guilds[interaction.guild.id] = channelOption.id;
 
-      await interaction.reply("Ok, ficarei aí.");
+      await interaction.reply({content: 'Ok, ficarei aí.', ephemeral: true});
 
       // Save the updated configuration file
       fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
@@ -806,8 +805,6 @@ const qualDano = function (nivel) {
     }
   });
 
-  await saveJsonToDrive('config.json', config);
-  await saveJsonToDrive('fichas.json', fichas);
 })();
 
 
