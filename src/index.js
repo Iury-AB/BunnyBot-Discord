@@ -4,6 +4,7 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const { Client, IntentsBitField, Guild, REST, Routes, Permissions, GuildMembers, PermissionFlagsBits } = require('discord.js');
 const app = express();
+const path = require('path');
 const port = process.env.PORT || 3000;
 const googleDriveHelper = require('./googleDriveHelper');
 
@@ -23,7 +24,8 @@ async function loadJsonFromDrive(fileName) {
   const auth = await googleDriveHelper.authorize();
   const fileId = await googleDriveHelper.getFileIdByName(auth, fileName);
   if (fileId) {
-    const tempFilePath = path.join(__dirname, fileName);
+    const rootDir = path.join(__dirname, '..');
+    const tempFilePath = path.join(rootDir, fileName);
     await googleDriveHelper.downloadFile(auth, fileId, tempFilePath);
     return JSON.parse(fs.readFileSync(tempFilePath));
   } else {
@@ -33,14 +35,16 @@ async function loadJsonFromDrive(fileName) {
 
 async function saveJsonToDrive(fileName, data) {
   const auth = await googleDriveHelper.authorize();
-  const tempFilePath = path.join(__dirname, fileName);
+  const rootDir = path.join(__dirname, '..');
+  const tempFilePath = path.join(rootDir, fileName);
   fs.writeFileSync(tempFilePath, JSON.stringify(data, null, 2));
   const fileId = await googleDriveHelper.getFileIdByName(auth, fileName);
   if (fileId) {
-    await googleDriveHelper.uploadFile(auth, fileName);
-  } else {
-    await googleDriveHelper.uploadFile(auth, fileName);
+    console.log(`File ${fileName} exists, deleting before re-uploading...`);
+    await googleDriveHelper.deleteFile(auth, fileId);
   }
+  await googleDriveHelper.uploadFile(auth, fileName, tempFilePath);
+  console.log(`File ${fileName} uploaded successfully.`);
 }
 
 let config = {};
@@ -238,6 +242,7 @@ const qualDano = function (nivel) {
 
     // Save the updated configuration file
     fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
+    await saveJsonToDrive('fichas.json', fichas);
 
     let msg;
     if (rolagem == 20 || rolagem == 1) {
@@ -377,7 +382,8 @@ const qualDano = function (nivel) {
 
     // Save the updated configuration file
     fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-
+    await saveJsonToDrive('fichas.json', fichas);
+    
     let msg;
     if (rolagem == 20 || rolagem == 1) {
       msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + nomeTeste;
@@ -451,6 +457,7 @@ const qualDano = function (nivel) {
 
     // Save the updated configuration file
     fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
+    await saveJsonToDrive('fichas.json', fichas);
 
     let msg;
     //parte sobre o Acerto
@@ -544,6 +551,7 @@ const qualDano = function (nivel) {
 
     // Save the updated configuration file
     fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
+    await saveJsonToDrive('fichas.json', fichas);
 
     let msg;
     //parte sobre o Acerto
@@ -585,6 +593,7 @@ const qualDano = function (nivel) {
 
     // Save the updated configuration file
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+    saveJsonToDrive('config.json', config);
 
     console.log(`Removed configuration for guild ${guild.name} (${guild.id})`);
   });
@@ -608,6 +617,7 @@ const qualDano = function (nivel) {
 
       // Save the updated configuration file
       fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+      await saveJsonToDrive('config.json', config);
       console.log("Mudei de canal");
 
     }
@@ -795,8 +805,6 @@ const qualDano = function (nivel) {
       }
     }
   });
-
-
 
   await saveJsonToDrive('config.json', config);
   await saveJsonToDrive('fichas.json', fichas);
