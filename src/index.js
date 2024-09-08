@@ -204,13 +204,6 @@ app.post('/submit-form', async (req, res) => {
   const rolagem = resultado - bonus;
   const nomeTeste = qualTeste("ValorPericias." + perIndex);
 
-  // Store the attribute value on the sheets json
-  if (typeof (received["Jogador"]) !== 'undefined') {
-    fichas.dados = fichas.dados || {};
-    fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
-    fichas.dados[received["Jogador"]][nomeTeste] = bonus;
-  }
-
 
  
   let msg;
@@ -340,15 +333,6 @@ app.post('/habilidade', async (req, res) => {
   const bonus = dadosFicha["Hab"];
   const rolagem = resultado - bonus;
   const nomeTeste = perIndex;
-
-  // Store the attribute value on the sheets json
-  if (typeof (received["Jogador"]) !== 'undefined') {
-    fichas.dados = fichas.dados || {};
-    fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
-    fichas.dados[received["Jogador"]][nomeTeste] = bonus;
-  }
-
-
  
   let msg;
   if (rolagem == 20 || rolagem == 1) {
@@ -414,14 +398,7 @@ app.post('/ataque', async (req, res) => {
   const rolagemAcerto = resultadoAcerto - bonusAcerto;
   const nomeTeste = perIndex;
 
-  // Store the attribute value on the sheets json
-  if (typeof (received["Jogador"]) !== 'undefined') {
-    fichas.dados = fichas.dados || {};
-    fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
-    fichas.dados[received["Jogador"]][nomeTeste] = bonusAcerto;
-  }
 
- 
   let msg;
   //parte sobre o Acerto
   if (rolagemAcerto >= crit || rolagemAcerto == 1) {
@@ -505,13 +482,6 @@ app.post('/ataqueNaoDano', async (req, res) => {
   const rolagemAcerto = resultadoAcerto - bonusAcerto;
   const nomeTeste = perIndex;
 
-  // Store the attribute value on the sheets json
-  if (typeof (received["Jogador"]) !== 'undefined') {
-    fichas.dados = fichas.dados || {};
-    fichas.dados[received["Jogador"]] = fichas.dados[received["Jogador"]] || {};
-    fichas.dados[received["Jogador"]][nomeTeste] = bonusAcerto;
-  }
-
 
   let msg;
   //parte sobre o Acerto
@@ -574,189 +544,6 @@ client.on('interactionCreate', async (interaction) => {
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
     console.log("Mudei de canal");
 
-  }
-  else if (interaction.commandName === 'teste-perícias') {
-    const pericia = interaction.options.getString('pericias');
-
-    member = interaction.member.user.username;
-    console.log(member);
-    console.log(pericia);
-
-    if (fichas.dados && fichas.dados[member] && (pericia in fichas.dados[member])) {
-      var bonus = fichas.dados[member][pericia];
-      var rolagem = Math.floor(Math.random() * 20) + 1;
-      var resultado = rolagem + bonus;
-
-      let msg;
-      if (rolagem == 20 || rolagem == 1) {
-        msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + pericia;
-        if (rolagem == 20) {
-          msg = ":sparkles: " + msg;
-        } else if (rolagem == 1) {
-          msg = ":skull: " + msg;
-        }
-      } else {
-        msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + pericia;
-      }
-
-      let sheetUser = interaction.member.user;
-      if (sheetUser) {
-        msg = "<@" + sheetUser.id + ">\n" + msg;
-      } else {
-        console.log("Usuario não encontrado.");
-      }
-
-      let guildId = interaction.guild.id;
-      let channelId;
-      let channel;
-      if (config.guilds && config.guilds[guildId]) {
-        channelId = config.guilds[guildId]; // channel ID
-        channel = interaction.guild.channels.cache.get(channelId);
-        interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
-        await channel.send(msg);
-      } else {
-        interaction.reply(msg);
-      }
-
-    } else {
-      return interaction.reply({ content: 'Você ainda não fez esse teste com sua ficha.', ephemeral: true });
-    }
-  }
-  else if (interaction.commandName === 'teste-habilidades') {
-    const habilidade = interaction.options.getString('habilidades');
-
-    member = interaction.member.user.username;
-    console.log(member);
-    console.log(habilidade);
-
-    if (fichas.dados && fichas.dados[member] && (habilidade in fichas.dados[member])) {
-      var bonus = fichas.dados[member][habilidade];
-      var rolagem = Math.floor(Math.random() * 20) + 1;
-      var resultado = rolagem + bonus;
-
-      let msg;
-      if (rolagem == 20 || rolagem == 1) {
-        msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + habilidade;
-        if (rolagem == 20) {
-          msg = ":sparkles: " + msg;
-        } else if (rolagem == 1) {
-          msg = ":skull: " + msg;
-        }
-      } else {
-        msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + habilidade;
-      }
-
-      let sheetUser = interaction.member.user;
-      if (sheetUser) {
-        msg = "<@" + sheetUser.id + ">\n" + msg;
-      } else {
-        console.log("Usuario não encontrado.");
-      }
-
-      let guildId = interaction.guild.id;
-      let channelId;
-      let channel;
-      if (config.guilds && config.guilds[guildId]) {
-        channelId = config.guilds[guildId]; // channel ID
-        channel = interaction.guild.channels.cache.get(channelId);
-        interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
-        await channel.send(msg);
-      } else {
-        interaction.reply(msg);
-      }
-    } else {
-      return interaction.reply({ content: 'Você ainda não fez esse teste com sua ficha.', ephemeral: true });
-    }
-  }
-  else if (interaction.commandName === 'teste-defesa') {
-    const defesa = interaction.options.getString('defesas');
-
-    member = interaction.member.user.username;
-    console.log(member);
-    console.log(defesa);
-
-    if (fichas.dados && fichas.dados[member] && (defesa in fichas.dados[memebr])) {
-      var bonus = fichas.dados[member][defesa];
-      var rolagem = Math.floor(Math.random() * 20) + 1;
-      var resultado = rolagem + bonus;
-
-      let msg;
-      if (rolagem == 20 || rolagem == 1) {
-        msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + defesa;
-        if (rolagem == 20) {
-          msg = ":sparkles: " + msg;
-        } else if (rolagem == 1) {
-          msg = ":skull: " + msg;
-        }
-      } else {
-        msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + defesa;
-      }
-
-      let sheetUser = interaction.member.user;
-      if (sheetUser) {
-        msg = "<@" + sheetUser.id + ">\n" + msg;
-      } else {
-        console.log("Usuario não encontrado.");
-      }
-
-      let guildId = interaction.guild.id;
-      let channelId;
-      let channel;
-      if (config.guilds && config.guilds[guildId]) {
-        channelId = config.guilds[guildId]; // channel ID
-        channel = interaction.guild.channels.cache.get(channelId);
-        interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
-        await channel.send(msg);
-      } else {
-        interaction.reply(msg);
-      }
-    } else {
-      return interaction.reply({ content: 'Você ainda não fez esse teste com sua ficha.', ephemeral: true });
-    }
-  }
-  else if (interaction.commandName === 'teste-dano') {
-    const nivel_dano = interaction.options.getInteger('dano');
-    member = interaction.member.user.username;
-    console.log(member);
-    console.log(nivel_dano);
-
-    var rolagem = qualDano(nivel_dano);
-    var parts = rolagem.split(/d|\+/);
-    var nDados = parseInt(parts[0]);
-    var dado = parseInt(parts[1]);
-    var bonus = parseInt(parts[2]);
-    let somaDados = 0;
-
-    // rolar o dano
-    var rolls = [];
-    for (var n = 0; n < nDados; n++) {
-      var thisDado = Math.floor(Math.random() * dado) + 1;
-      somaDados += thisDado;
-      rolls.push(thisDado);
-    }
-    var rolagens = rolls.join(", ");
-    somaDados += bonus;
-
-    let msg = "` " + somaDados + " ` ⟵ `" + rolagens + "` ⟵ Dano " + nivel_dano + " [" + rolagem + "]";
-    
-    let sheetUser = interaction.member.user;
-    if (sheetUser) {
-      msg = "<@" + sheetUser.id + ">\n" + msg;
-    } else {
-      console.log("Usuario não encontrado.");
-    }
-
-    let guildId = interaction.guild.id;
-    let channelId;
-    let channel;
-    if (config.guilds && config.guilds[guildId]) {
-      channelId = config.guilds[guildId]; // channel ID
-      channel = interaction.guild.channels.cache.get(channelId);
-      interaction.reply({ content: ':fingers_crossed: Boa sorte!', ephemeral: true });
-      await channel.send(msg);
-    } else {
-      interaction.reply(msg);
-    }
   }
 });
 
