@@ -27,12 +27,6 @@ try {
   console.error('Error loading configuration file:', error);
 }
 
-let fichas = {};
-try {
-  fichas = JSON.parse(fs.readFileSync('fichas.json'));
-} catch (error) {
-  console.error('Error loading sheets file:', error);
-}
 
 client.on('ready', (c) => {
   console.log(`${c.user.tag} is ready.`);
@@ -218,9 +212,7 @@ app.post('/submit-form', async (req, res) => {
   }
 
 
-  // Save the updated configuration file
-  fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-
+ 
   let msg;
   if (rolagem == 20 || rolagem == 1) {
     msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + nomeTeste;
@@ -357,9 +349,7 @@ app.post('/habilidade', async (req, res) => {
   }
 
 
-  // Save the updated configuration file
-  fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-
+ 
   let msg;
   if (rolagem == 20 || rolagem == 1) {
     msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + nomeTeste;
@@ -431,9 +421,7 @@ app.post('/ataque', async (req, res) => {
     fichas.dados[received["Jogador"]][nomeTeste] = bonusAcerto;
   }
 
-  // Save the updated configuration file
-  fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
-
+ 
   let msg;
   //parte sobre o Acerto
   if (rolagemAcerto >= crit || rolagemAcerto == 1) {
@@ -524,8 +512,6 @@ app.post('/ataqueNaoDano', async (req, res) => {
     fichas.dados[received["Jogador"]][nomeTeste] = bonusAcerto;
   }
 
-  // Save the updated configuration file
-  fs.writeFileSync('fichas.json', JSON.stringify(fichas, null, 2));
 
   let msg;
   //parte sobre o Acerto
@@ -576,10 +562,6 @@ client.on('interactionCreate', async (interaction) => {
 
   if (interaction.commandName === 'bind') {
     // Check if the user has permission to manage channels
-    if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
-      console.log("Sem permissao");
-      return interaction.reply({ content: 'Eu não te obedeço.', ephemeral: true });
-    }
     const channelOption = interaction.options.getChannel('canal');
 
     // Store the ID of the specified channel in the configuration file
