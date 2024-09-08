@@ -19,12 +19,22 @@ const client = new Client({
   ]
 });
 
+
 // Load the configuration file
-let config = {};
 try {
-  config = JSON.parse(fs.readFileSync('config.json'));
+  // Check if the config.json file exists
+  const configPath = path.join(__dirname, 'config.json');
+  if (!fs.existsSync(configPath)) {
+    // If it doesn't exist, create it with default configuration
+    fs.writeFileSync(configPath, JSON.stringify({}, null, 2));
+    console.log('Config file created with default settings.');
+    config = defaultConfig;
+  } else {
+    // If it exists, read and parse the file
+    config = JSON.parse(fs.readFileSync(configPath));
+  }
 } catch (error) {
-  console.error('Error loading configuration file:', error);
+  console.error('Error loading or creating configuration file:', error);
 }
 
 
