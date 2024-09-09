@@ -3,6 +3,7 @@ const express = require('express');
 const fs = require('fs');
 const keep_alive = require('./keep_alive.js');
 const bodyParser = require('body-parser');
+const path = require('path');
 const { Client, IntentsBitField, Guild, REST, Routes, Permissions, GuildMembers, PermissionFlagsBits } = require('discord.js');
 const app = express();
 const port = process.env.PORT || 3000;
