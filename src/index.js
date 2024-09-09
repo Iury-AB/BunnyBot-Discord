@@ -20,16 +20,16 @@ const client = new Client({
   ]
 });
 
+let config = {};
 
-// Load the configuration file
 try {
   // Check if the config.json file exists
   const configPath = path.join(__dirname, 'config.json');
   if (!fs.existsSync(configPath)) {
-    // If it doesn't exist, create it with default configuration
+    // If it doesn't exist, create an empty object in the file
     fs.writeFileSync(configPath, JSON.stringify({}, null, 2));
-    console.log('Config file created with default settings.');
-    config = defaultConfig;
+    console.log('Config file created with an empty object.');
+    config = {};
   } else {
     // If it exists, read and parse the file
     config = JSON.parse(fs.readFileSync(configPath));
@@ -37,7 +37,6 @@ try {
 } catch (error) {
   console.error('Error loading or creating configuration file:', error);
 }
-
 
 client.on('ready', (c) => {
   console.log(`${c.user.tag} is ready.`);
