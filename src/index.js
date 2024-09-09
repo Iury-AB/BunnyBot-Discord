@@ -174,6 +174,10 @@ const qualDano = function (nivel) {
   return rolagem;
 };
 
+app.get('/', (req, res) => {
+  res.send('Bot is alive!');
+});
+
 // Define a route to handle incoming POST requests
 app.post('/submit-form', async (req, res) => {
   // Handle incoming form data
@@ -239,6 +243,7 @@ app.post('/submit-form', async (req, res) => {
 
   await channel.send(msg);
 });
+
 
 app.post('/dano', async (req, res) => {
   // Handle incoming form data
