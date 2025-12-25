@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Ficha de Personagem</title>
+
+  <style>
+    @font-face {
+      font-family: "NewsflashBB";
+      src: url(NewsflashBB.ttf);
+    }
+
+    @font-face {
+      font-family: "comic";
+      src: url(comic.ttf);
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-image: url("C:/Users/iurya/OneDrive/Imagens/Saved Pictures 2/Hoffen's Path 2/Hoffens_3rd_Key_visual_textless.png");
+      margin: 0;
+      padding: 20px;
+    }
+
+    .sheet {
+      max-width: 1000px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border: 1px solid #ccc;
+    }
+
+    h1 {
+      text-align: left;
+      margin-bottom: 2px;
+      margin-top: 2px;
+      font-family: NewsflashBB;
+      color:rgb(122, 179, 225);
+      font-weight: normal;
+    }
+
+    .bloco {
+      display: grid;
+      border: 2px solid rgb(90, 123, 254);
+      border-radius: 15px;
+      margin: 5px;
+    }
+
+    .header-grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 10px;
+    }
+
+    .habilities-skills-adv {
+      grid-template-columns: repeat(4, 1fr);
+      border: none;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .habilities {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2px;
+      padding: 10px;
+      align-items: center;
+    }
+
+    .defenses {
+      grid-template-columns: 40% 17% 17% 16% 10%;
+      gap: 2px;
+      padding: 10px;
+      align-items: center;
+    }
+
+    .normal-text {
+      font-family: NewsflashBB;
+      color: black;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .field label {
+      font-size: 15px;
+      font-family: NewsflashBB;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .field input {
+      padding: 1px;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 14px;
+      font-family: comic;
+    }
+
+    .hability label {
+      font-size: 20px;
+      font-family: NewsflashBB;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .hability input {
+      padding: 1px;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 25px;
+      font-family: comic;
+      text-align:center;
+      max-width: 70px;
+      background-color: rgba(123,181,238,0.5);
+      border: none;
+      border-radius: 5px;
+    }
+
+    .sub-hab label {
+      font-size: 15px;
+      font-family: NewsflashBB;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .sub-hab input {
+      padding: 1px;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 15px;
+      font-family: comic;
+      text-align:center;
+      max-width: 70px;
+      border: 2px solid rgb(123,181,238);
+    }
+
+    .outros input {
+      background-color: rgba(123,181,238,0.5);
+      border: none;
+      text-align:center;
+      font-size: 15px;
+      padding: 1px;
+      max-width: 30px;
+    }
+
+    .outros label {
+      font-family: NewsflashBB;
+      font-size: 12px;
+    }
+
+    /* Fields that should span more columns */
+    .span-2 {
+      grid-column: span 2;
+    }
+
+    .span-3 {
+      grid-column: span 3;
+    }
+
+    .span-4 {
+      grid-column: span 4;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sheet">
+
+    <div class="bloco header-grid">
+
+      <div class="field span-2">
+        <label for="personagem">Personagem</label>
+        <input type="text" id="personagem">
+      </div>
+
+      <div class="field span-2">
+        <label for="jogador">Jogador</label>
+        <input type="text" id="jogador">
+      </div>
+
+      <div class="field">
+        <label for="totalPontos">Total de Pontos</label>
+        <input type="number" id="totalPontos">
+      </div>
+
+      <div class="field">
+        <label for="nivelPoder">Nivel de Poder</label>
+        <input type="text" id="nivelPoder">
+      </div>
+
+      <div class="field">
+        <label for="genero">Genero</label>
+        <input type="text" id="genero">
+      </div>
+
+      <div class="field">
+        <label for="idade">Idade</label>
+        <input type="number" id="idade">
+      </div>
+
+      <div class="field">
+        <label for="altura">Altura</label>
+        <input type="text" id="altura">
+      </div>
+
+      <div class="field">
+        <label for="peso">Peso</label>
+        <input type="text" id="peso">
+      </div>
+
+      <div class="field">
+        <label for="olhos">Olhos</label>
+        <input type="text" id="olhos">
+      </div>
+
+      <div class="field">
+        <label for="cabelos">Cabelos</label>
+        <input type="text" id="cabelos">
+      </div>
+
+      <div class="field span-2">
+        <label for="grupo">Grupo Afiliado</label>
+        <input type="text" id="grupo">
+      </div>
+
+      <div class="field span-2">
+        <label for="base">Base de Operacoes</label>
+        <input type="text" id="base">
+      </div>
+
+    </div>
+
+    <div class="bloco habilities-skills-adv">
+      
+      <div class="bloco habilities">
+        <h1>Habilidades</h1><br>
+        <div class="hability">
+          <label for="forca">Forca</label><br>
+          <input class="dependente" type="number" id="forca" oninput="calcularCarga()">
+        </div>
+
+        <div class="sub-hab">
+          <label for="carga">Carga</label><br>
+          <input type="text" id="carga" readonly>
+          <script>
+            function calcularCarga() {
+              const hab = parseInt(document.getElementById("forca").value, 10);
+              let Forca = "---";
+
+              if (hab === -5) {
+                Forca = "1 Kg";
+              } else if (hab === -4) {
+                Forca = "2 Kg";
+              } else if (hab === -3) {
+                Forca = "4 Kg";
+              } else if (hab === -2) {
+                Forca = "6 Kg";
+              } else if (hab === -1) {
+                Forca = "8 Kg";
+              } else if (hab === 0) {
+                Forca = "10 Kg";
+              } else if (hab === 1) {
+                Forca = "20 Kg";
+              } else if (hab === 2) {
+                Forca = "30 Kg";
+              } else if (hab === 3) {
+                Forca = "40 Kg";
+              } else if (hab === 4) {
+                Forca = "50 Kg";
+              } else if (hab === 5) {
+                Forca = "100 Kg";
+              } else if (hab === 6) {
+                Forca = "120 Kg";
+              } else if (hab === 7) {
+                Forca = "140 Kg";
+              } else if (hab === 8) {
+                Forca = "160 Kg";
+              } else if (hab === 9) {
+                Forca = "180 Kg";
+              } else if (hab === 10) {
+                Forca = "400 Kg";
+              } else if (hab === 11) {
+                Forca = "500 Kg";
+              } else if (hab === 12) {
+                Forca = "600 Kg";
+              } else if (hab === 13) {
+                Forca = "700 Kg";
+              } else if (hab === 14) {
+                Forca = "800 Kg";
+              } else if (hab === 15) {
+                Forca = "1,6 ton";
+              } else if (hab === 16) {
+                Forca = "1,8 ton";
+              } else if (hab === 17) {
+                Forca = "2 ton";
+              } else if (hab === 18) {
+                Forca = "2,2 ton";
+              } else if (hab === 19) {
+                Forca = "2,4 ton";
+              } else if (hab === 20) {
+                Forca = "5 ton";
+              } else if (hab === 21) {
+                Forca = "5,5 ton";
+              } else if (hab === 22) {
+                Forca = "6 ton";
+              } else if (hab === 23) {
+                Forca = "6,5 ton";
+              } else if (hab === 24) {
+                Forca = "7 ton";
+              } else if (hab === 25) {
+                Forca = "15 ton";
+              } else if (hab === 26) {
+                Forca = "16 ton";
+              } else if (hab === 27) {
+                Forca = "17 ton";
+              } else if (hab === 28) {
+                Forca = "18 ton";
+              } else if (hab === 29) {
+                Forca = "19 ton";
+              } else if (hab === 30) {
+                Forca = "50 ton";
+              }
+
+              document.getElementById("carga").value = Forca;
+            }
+          </script>
+        </div>
+
+        <div class="hability">
+          <label for="agilidade">Agilidade</label><br>
+          <input class="dependente" type="number" id="agilidade" oninput="calcularDeslocamento()">
+        </div>
+
+        <div class="sub-hab">
+          <label for="deslocamento">Deslocamento</label><br>
+          <input type="text" id="deslocamento" readonly>
+          <script>
+            function calcularDeslocamento() {
+              const agilidade = parseInt(document.getElementById("agilidade").value, 10);
+              let deslocamento = 0;
+              if(agilidade >= 0){
+                deslocamento = (agilidade + 1)*1.5;
+              }else if(agilidade < 0){
+                deslocamento = Math.pow(2, agilidade+1);
+                deslocamento = deslocamento.toFixed(2)
+              }
+              document.getElementById("deslocamento").value = deslocamento + " m";
+            }
+          </script>
+        </div>
+
+        <div class="hability">
+          <label for="luta">Luta</label><br>
+          <input class="dependente" type="number" id="luta">
+        </div>
+
+        <div class="hability">
+          <label for="vigor">Vigor</label><br>
+          <input class="dependente" type="number" id="vigor">
+        </div>
+
+        <div class="hability">
+          <label for="intelecto">Intelecto</label><br>
+          <input class="dependente" type="number" id="intelecto">
+        </div>
+
+        <div class="hability">
+          <label for="prontidao">Prontidao</label><br>
+          <input class="dependente" type="number" id="prontidao">
+        </div>
+
+        <div class="hability">
+          <label for="destreza">Destreza</label><br>
+          <input class="dependente" type="number" id="destreza">
+        </div>
+
+        <div class="hability">
+          <label for="presenca">Presenca</label><br>
+          <input class="dependente" type="number" id="prensenca">
+        </div>
+
+      </div>
+
+      <div class="bloco defenses">
+        <h1>Defesa</h1>
+        <p class="normal-text" style="font-size: 13px;text-align: center;">Total</p>
+        <p class="normal-text" style="font-size: 13px;text-align: center;">Grad. Defesa</p>
+        <p class="normal-text" style="font-size: 13px;text-align: center;">Outros</p>
+        <p class="normal-text" style="font-size: 13px;text-align: center;color:rgb(90, 123, 254);">
+          Max
+        </p>
+
+        <span class="normal-text" style="font-size: 20px;">
+          <span style="font-size: 13px;">(Agi)</span> Esquiva
+        </span>
+        <div class="sub-hab">
+          <input type="number" id="esquiva-total" readonly>
+        </div>
+        <div class="sub-hab">
+          <input class="dependente" type="number" id="esquiva-grad">
+        </div>
+        <div class="outros">
+          <input class="dependente" type="number" id="esquiva-outros">
+        </div>
+
+        <span class="normal-text" style="font-size: 20px;">
+          <span style="font-size: 13px;">(Lut)</span> Aparar
+        </span>
+        <div class="sub-hab">
+          <input type="number" id="aparar-total" readonly>
+        </div>
+        <div class="sub-hab">
+          <input class="dependente" type="number" id="aparar-grad">
+        </div>
+        <div class="outros">
+          <input class="dependente" type="number" id="aparar-outros">
+        </div>
+
+        <span class="normal-text" style="font-size: 20px;">
+          <span style="font-size: 13px;">(Vig)</span> Fortitude
+        </span>
+        <div class="sub-hab">
+          <input type="number" id="fortitude-total" readonly>
+        </div>
+        <div class="sub-hab">
+          <input class="dependente" type="number" id="fortitude-grad">
+        </div>
+        <div class="outros">
+          <input class="dependente" type="number" id="fortitude-outros">
+        </div>
+
+        <span class="normal-text" style="font-size: 20px;">
+          <span style="font-size: 13px;">(Vig)</span> Resistencia
+        </span>
+        <div class="sub-hab">
+          <input type="number" id="resistencia-total" readonly>
+        </div>
+        <div class="sub-hab">
+          <input class="dependente" type="number" id="resistencia-grad">
+        </div>
+        <div class="outros">
+          <input class="dependente" type="number" id="resistencia-outros">
+        </div>
+
+        <span class="normal-text" style="font-size: 20px;">
+          <span style="font-size: 13px;">(Pro)</span> Vontade
+        </span>
+        <div class="sub-hab">
+          <input type="number" id="vontade-total" readonly>
+        </div>
+        <div class="sub-hab">
+          <input class="dependente" type="number" id="vontade-grad">
+        </div>
+        <div class="outros">
+          <input class="dependente" type="number" id="vontade-outros">
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function calcularTotalDefesa(hab, grad, def, ot){
+      const habilidade = Number(document.getElementById(hab).value) || 0;
+      const graduacao = Number(document.getElementById(grad).value) || 0;
+      const outros = Number(document.getElementById(ot).value) || 0;
+
+      document.getElementById(def).value = habilidade + graduacao + outros
+    }
+
+    function recalcularTudo() {
+      calcularTotalDefesa("agilidade","esquiva-grad","esquiva-total","esquiva-outros");
+      calcularTotalDefesa("luta","aparar-grad","aparar-total","aparar-outros");
+      calcularTotalDefesa("vigor","fortitude-grad","fortitude-total","fortitude-outros");
+      calcularTotalDefesa("vigor","resistencia-grad","resistencia-total","resistencia-outros");
+      calcularTotalDefesa("prontidao","vontade-grad","vontade-total","vontade-outros")
+    }
+
+    document.querySelectorAll(".dependente").forEach(input => {
+      input.addEventListener("input", recalcularTudo);
+    });
+  </script>
+</body>
+</html>
