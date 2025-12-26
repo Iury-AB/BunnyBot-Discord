@@ -53,7 +53,7 @@
     }
 
     .habilities-skills-adv {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: 25% 30% 45%;
       border: none;
       gap: 12px;
       align-items: start;
@@ -67,7 +67,7 @@
     }
 
     .defenses {
-      grid-template-columns: 40% 17% 17% 16% 10%;
+      grid-template-columns: 44% 15% 15% 16% 10%;
       gap: 2px;
       padding: 10px;
       align-items: center;
@@ -76,6 +76,17 @@
     .normal-text {
       font-family: NewsflashBB;
       color: black;
+    }
+
+    .small-number input {
+      padding: 1px;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 13px;
+      font-family: NewsflashBB;
+      color: rgb(90, 123, 254);
+      text-align:center;
+      border:none;
     }
 
     .field {
@@ -162,6 +173,12 @@
     .span-4 {
       grid-column: span 4;
     }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
   </style>
 </head>
 <body>
@@ -185,9 +202,9 @@
         <input type="number" id="totalPontos">
       </div>
 
-      <div class="field">
+      <div class="field dependente">
         <label for="nivelPoder">Nivel de Poder</label>
-        <input type="text" id="nivelPoder">
+        <input type="number" id="nivelPoder">
       </div>
 
       <div class="field">
@@ -404,6 +421,9 @@
         <div class="outros">
           <input class="dependente" type="number" id="esquiva-outros">
         </div>
+        <div class="small-number">
+          <input type="number" id="esquiva-max" readonly>
+        </div>
 
         <span class="normal-text" style="font-size: 20px;">
           <span style="font-size: 13px;">(Lut)</span> Aparar
@@ -416,6 +436,9 @@
         </div>
         <div class="outros">
           <input class="dependente" type="number" id="aparar-outros">
+        </div>
+        <div class="small-number">
+          <input type="number" id="aparar-max" readonly>
         </div>
 
         <span class="normal-text" style="font-size: 20px;">
@@ -430,6 +453,9 @@
         <div class="outros">
           <input class="dependente" type="number" id="fortitude-outros">
         </div>
+        <div class="small-number">
+          <input type="number" id="fortitude-max" readonly>
+        </div>
 
         <span class="normal-text" style="font-size: 20px;">
           <span style="font-size: 13px;">(Vig)</span> Resistencia
@@ -442,6 +468,9 @@
         </div>
         <div class="outros">
           <input class="dependente" type="number" id="resistencia-outros">
+        </div>
+        <div class="small-number">
+          <input type="number" id="resistencia-max" readonly>
         </div>
 
         <span class="normal-text" style="font-size: 20px;">
@@ -456,12 +485,124 @@
         <div class="outros">
           <input class="dependente" type="number" id="vontade-outros">
         </div>
+        <div class="small-number">
+          <input type="number" id="vontade-max" readonly>
+        </div>
 
+      </div>
+
+      <div>
+        <button onclick="exportarFicha();salvarFicha()">Salvar Ficha</button>
+        <input type="file" accept=".json" onchange="importarFicha(event)">
+        <select id="listaFichas" onchange="carregarFicha(this.value)">
+          <option value="">— selecionar personagem —</option>
+        </select>
       </div>
     </div>
   </div>
 
   <script>
+    function exportarFicha() {
+      const dados = {};
+      document.querySelectorAll("input, textarea, select").forEach(el => {
+        if (el.id) {
+          dados[el.id] = el.value;
+        }
+      });
+
+      const blob = new Blob(
+        [JSON.stringify(dados, null, 2)],
+        { type: "application/json" }
+      );
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "ficha-rpg.json";
+      link.click();
+    }
+
+    function importarFicha(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dados = JSON.parse(reader.result);
+
+        Object.keys(dados).forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = dados[id];
+        });
+
+        // recalcula campos automáticos
+        if (typeof recalcularTudo === "function") {
+          recalcularTudo();
+        }
+      };
+
+      reader.readAsText(file);
+    }
+
+    function getIndex() {
+      return JSON.parse(localStorage.getItem("fichas:index")) || [];
+    }
+
+    function saveIndex(index) {
+      localStorage.setItem("fichas:index", JSON.stringify(index));
+    }
+
+    function salvarFicha() {
+      const dados = {};
+
+      document.querySelectorAll("input, textarea, select").forEach(el => {
+        if (el.id) dados[el.id] = el.value;
+      });
+
+      const nome = document.getElementById("personagem").value;
+
+      localStorage.setItem(`ficha:${nome}`, JSON.stringify(dados));
+
+      const index = getIndex();
+      if (!index.includes(nome)) {
+        index.push(nome);
+        saveIndex(index);
+      }
+    }
+
+    function carregarFicha(nome) {
+      const dados = JSON.parse(localStorage.getItem(nome));
+      if (!dados) return;
+
+      Object.keys(dados).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = dados[id];
+      });
+    }
+
+    function carregarIndex() {
+      const select = document.getElementById("listaFichas");
+      const index = JSON.parse(localStorage.getItem("fichas:index")) || [];
+
+      // limpa o select
+      select.innerHTML = "";
+
+      // opção padrão
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "— selecionar personagem —";
+      select.appendChild(placeholder);
+
+      // adiciona as fichas
+      index.forEach(nome => {
+        const option = document.createElement("option");
+        option.value = nome;
+        option.textContent = nome;
+        select.appendChild(option);
+      });
+    }
+
+    carregarIndex();
+
     function calcularTotalDefesa(hab, grad, def, ot){
       const habilidade = Number(document.getElementById(hab).value) || 0;
       const graduacao = Number(document.getElementById(grad).value) || 0;
@@ -470,17 +611,48 @@
       document.getElementById(def).value = habilidade + graduacao + outros
     }
 
+    function npLimit(limitWith, limitedStat){
+      const NP = Number(document.getElementById("nivelPoder").value) || 0;
+      const res = document.getElementById(limitWith).value;
+
+      document.getElementById(limitedStat).value = parseInt(2*NP-res);
+    }
+
+    function limitResistencia(){
+      const NP = Number(document.getElementById("nivelPoder").value) || 0;
+      const aparar = Number(document.getElementById("aparar-total").value) || 0;
+      const esquiva = Number(document.getElementById("esquiva-total").value) || 0;
+      let valorDefesa = 0;
+      if (esquiva > aparar) {
+        valorDefesa= esquiva;
+      }
+      else{
+        valorDefesa = aparar;
+      }
+
+      document.getElementById("resistencia-max").value = 2*NP-valorDefesa;
+    }
+
     function recalcularTudo() {
       calcularTotalDefesa("agilidade","esquiva-grad","esquiva-total","esquiva-outros");
       calcularTotalDefesa("luta","aparar-grad","aparar-total","aparar-outros");
       calcularTotalDefesa("vigor","fortitude-grad","fortitude-total","fortitude-outros");
       calcularTotalDefesa("vigor","resistencia-grad","resistencia-total","resistencia-outros");
       calcularTotalDefesa("prontidao","vontade-grad","vontade-total","vontade-outros")
+      npLimit("resistencia-total","esquiva-max")
+      npLimit("resistencia-total","aparar-max")
+      npLimit("fortitude-total","vontade-max")
+      npLimit("vontade-total","fortitude-max")
+      npLimit("fortitude-total","vontade-max")
+      limitResistencia()
     }
+    
 
     document.querySelectorAll(".dependente").forEach(input => {
       input.addEventListener("input", recalcularTudo);
     });
+
+    
   </script>
 </body>
 </html>
