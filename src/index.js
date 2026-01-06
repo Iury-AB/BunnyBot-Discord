@@ -4,12 +4,15 @@ const fs = require('fs');
 const keep_alive = require('./keep_alive.js');
 const bodyParser = require('body-parser');
 const path = require('path');
+const cors = require("cors");
 const { Client, IntentsBitField, Guild, REST, Routes, Permissions, GuildMembers, PermissionFlagsBits } = require('discord.js');
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 const client = new Client({
   intents: [
@@ -177,6 +180,8 @@ const qualDano = function (nivel) {
 app.get('/', (req, res) => {
   res.send('Bot is alive!');
 });
+
+
 
 // Define a route to handle incoming POST requests
 app.post('/submit-form', async (req, res) => {
