@@ -292,13 +292,19 @@ app.post('/dano', async (req, res) => {
   const nvlDano = dadosFicha["Dano"];
   const rolagens = dadosFicha["rolagensDano"];
   const calcDano = dadosFicha["Rolagem"];
+  const crit = dadosFicha["critico"];''
 
   let msg;
   if (calcDano == "---") {
-    msg = ":mag: Dano não encontrado."
+    msg = "\n\n:mag: Dano não encontrado."
   }
   else {
-    msg = "` " + resultado + " ` ⟵ `" + rolagens + "` ⟵ Dano " + nvlDano + " [" + calcDano + "]";
+    console.log(resultado);
+    if (crit) {
+      msg = ":sparkles: **` " + 2*resultado + " `** ⟵ `" + rolagens + "` ⟵ Dano " + nvlDano + " crítico! [2*(" + calcDano + ")]";
+    } else {
+      msg = "` " + resultado + " ` ⟵ `" + rolagens + "` ⟵ Dano " + nvlDano + " [" + calcDano + "]";
+    }
   }
 
   const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
