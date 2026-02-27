@@ -320,6 +320,77 @@ app.post('/dano', async (req, res) => {
   await channel.send(msg);
 });
 
+app.post('/cura', async (req, res) => {
+  // Handle incoming form data
+  res.send();
+
+  const reqBody = JSON.stringify(req.body);
+  const received = JSON.parse(reqBody);
+  // Map over the values array and parse each value to an integer
+  const values = Object.values(received);
+  const keys = Object.keys(received);
+  console.log(keys);
+  console.log(values);
+  let newKeys = Object.keys(received);
+
+  let perIndex;
+  for (var i = 0; i < newKeys.length; i++) {
+    var index = newKeys[i].indexOf(' ');
+    if (newKeys[i][0] == 'D') perIndex = newKeys[i].split(' ')[1];
+    newKeys[i] = index !== -1 ? newKeys[i].substring(0, index) : newKeys[i];
+  }
+  const dadosFicha = {};
+  newKeys.forEach((key, index) => {
+    dadosFicha[key] = values[index];
+  });
+
+  let channelId;
+  let channel;
+  const guildId = received["discordID"]; // server ID
+  const guild = await client.guilds.fetch(guildId);
+
+  if (config.guilds && config.guilds[guildId]) {
+    channelId = config.guilds[guildId]; // channel ID
+    channel = guild.channels.cache.get(channelId);
+  } else {
+    const fetchedGuild = await client.guilds.fetch(guildId);
+    const systemChannel = fetchedGuild.systemChannel;
+    channel = systemChannel;
+  }
+
+  const resultado = dadosFicha["resultadoCura"];
+  const nvlDano = dadosFicha["Cura"];
+  const rolagens = dadosFicha["rolagensCura"];
+  const calcDano = dadosFicha["Rolagem"];
+  const crit = dadosFicha["critico"];''
+
+  let msg;
+  if (calcDano == "---") {
+    msg = "\n\n:mag: Cura não encontrada."
+  }
+  else {
+    console.log(resultado);
+    if (crit) {
+      msg = ":sparkles: **` " + 2*resultado + " `** ⟵ `" + rolagens + "` ⟵ Cura " + nvlDano + " crítico! [2*(" + calcDano + ")]";
+    } else {
+      msg = "` " + resultado + " ` ⟵ `" + rolagens + "` ⟵ Cura " + nvlDano + " [" + calcDano + "]";
+    }
+  }
+
+  const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
+
+  sheetUser = cachedUser.first();
+
+  if (sheetUser && Object.keys(received).length > 5) {
+    msg = "<@" + sheetUser.id + ">\n" + msg;
+  } else {
+    console.log("Usuario não encontrado.");
+  }
+
+  await channel.send(msg);
+});
+
+
 app.post('/habilidade', async (req, res) => {
   // Handle incoming form data
   res.send();
@@ -506,8 +577,11 @@ app.post('/ataqueNaoDano', async (req, res) => {
   const bonusAcerto = parseInt(dadosFicha["Acerto"]);
   const crit = parseInt(dadosFicha["Crit"]);
   const rolagemAcerto = resultadoAcerto - bonusAcerto;
-  const nomeTeste = perIndex;
-
+  var nomeTeste = perIndex;
+  const nomeAtaque = dadosFicha["nomeAtaque"];
+  if (nomeAtaque){
+    nomeTeste = nomeAtaque;
+  }
 
   let msg;
   //parte sobre o Acerto
