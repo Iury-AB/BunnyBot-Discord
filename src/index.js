@@ -654,4 +654,6 @@ app.listen(port, () => {
 });
 
 
-client.login(process.env.TOKEN);
+client.login(process.env.TOKEN).catch((err) => {
+    console.error("Erro ao tentar logar no Discord:", err);
+});
