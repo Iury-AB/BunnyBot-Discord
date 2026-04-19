@@ -665,6 +665,15 @@ client.on('error', (error) => {
   console.error(`[DISCORD ERROR]`, error);
 });
 
+console.log(`[SISTEMA] Versão do Node.js rodando: ${process.version}`);
+
+
+console.log('[REDE] Testando conexão direta com a API do Discord...');
+fetch('https://discord.com/api/v10/gateway')
+  .then(res => res.json())
+  .then(data => console.log('[REDE] Sucesso! O Render consegue ver o Discord:', data))
+  .catch(err => console.error('[REDE] Falha! O Render está bloqueado:', err));
+
 
 client.login(process.env.TOKEN).catch((err) => {
     console.error("Erro ao tentar logar no Discord:", err);
