@@ -653,6 +653,18 @@ app.listen(port, () => {
   console.log(`Server listening at port ${port}`);
 });
 
+client.on('debug', (info) => {
+  console.log(`[DISCORD DEBUG] ${info}`);
+});
+
+client.on('warn', (info) => {
+  console.log(`[DISCORD WARN] ${info}`);
+});
+
+client.on('error', (error) => {
+  console.error(`[DISCORD ERROR]`, error);
+});
+
 
 client.login(process.env.TOKEN).catch((err) => {
     console.error("Erro ao tentar logar no Discord:", err);
