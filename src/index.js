@@ -1,8 +1,4 @@
 require('dotenv').config();
-
-const dns = require('node:dns');
-dns.setDefaultResultOrder('ipv4first');
-
 const express = require('express');
 const fs = require('fs');
 // const keep_alive = require('./keep_alive.js');
