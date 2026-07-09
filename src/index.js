@@ -428,20 +428,42 @@ app.post('/habilidade', async (req, res) => {
   }
   const resultado = dadosFicha["resultado"];
   const bonus = dadosFicha["Hab"];
-  const rolagem = resultado - bonus;
+  const modificadorGlobalCondicao = dadosFicha["modificadorGlobalCondicao"];
+  const rolagem = (modificadorGlobalCondicao) ? resultado - bonus - modificadorGlobalCondicao : resultado - bonus;
   const nomeTeste = perIndex;
+  const listaCondicoes = received["condicoes"];
+
+  const sinalModificador = modificadorGlobalCondicao < 0 ? " - " : " + ";
  
   let msg;
+
   if (rolagem == 20 || rolagem == 1) {
-    msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + nomeTeste;
+    if(modificadorGlobalCondicao == 0){
+      msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + ", " + nomeTeste;
+    }
+    else {
+      msg = "` " + resultado + " `" + " ⟵ [**" + rolagem + "**] 1d20 + " + bonus + sinalModificador + Math.abs(modificadorGlobalCondicao) + ", " + nomeTeste;
+    }
+
     if (rolagem == 20) {
       msg = ":sparkles: " + msg;
     } else if (rolagem == 1) {
       msg = ":skull: " + msg;
     }
+
   } else {
-    msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + nomeTeste;
+    if(modificadorGlobalCondicao == 0){
+      msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + ", " + nomeTeste;
+    }
+    else {
+      msg = "` " + resultado + " `" + " ⟵ [" + rolagem + "] 1d20 + " + bonus + sinalModificador + Math.abs(modificadorGlobalCondicao) + ", " + nomeTeste;
+    }
   }
+  
+  if (listaCondicoes) {
+    msg = msg + "\n" + "*`" + listaCondicoes + "`*";
+  }
+
   const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
 
   sheetUser = cachedUser.first();
