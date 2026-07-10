@@ -597,26 +597,46 @@ app.post('/ataqueNaoDano', async (req, res) => {
   console.log(dadosFicha);
   const resultadoAcerto = parseInt(dadosFicha["resultadoAc"]);
   const bonusAcerto = parseInt(dadosFicha["Acerto"]);
+  const modificadorGlobalCondicao = dadosFicha["modificadorGlobalCondicao"];
   const crit = parseInt(dadosFicha["Crit"]);
-  const rolagemAcerto = resultadoAcerto - bonusAcerto;
+  const rolagemAcerto = (modificadorGlobalCondicao) ? resultadoAcerto - bonusAcerto - modificadorGlobalCondicao : resultadoAcerto - bonusAcerto;
   var nomeTeste = perIndex;
   const nomeAtaque = dadosFicha["nomeAtaque"];
   if (nomeAtaque){
     nomeTeste = nomeAtaque;
   }
+  const listaCondicoes = received["condicoes"];
+  const sinalModificador = modificadorGlobalCondicao < 0 ? " - " : " + ";
 
   let msg;
   //parte sobre o Acerto
   if (rolagemAcerto >= crit || rolagemAcerto == 1) {
-    msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto;
+    if(modificadorGlobalCondicao == 0) {
+      msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto;
+    }
+    else {
+      msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [**" + rolagemAcerto + "**] 1d20 + " + bonusAcerto + sinalModificador + Math.abs(modificadorGlobalCondicao);
+    }
+    
     if (rolagemAcerto >= crit) {
       msg = ":sparkles: " + msg;
     } else if (rolagemAcerto == 1) {
       msg = ":skull: " + msg;
     }
-  } else {
-    msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto;
+  } 
+  else {
+    if(modificadorGlobalCondicao == 0) {
+      msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto;
+    }
+    else {
+      msg = "Ataque " + nomeTeste + "\n` " + resultadoAcerto + " `" + " ⟵ [" + rolagemAcerto + "] 1d20 + " + bonusAcerto + sinalModificador + Math.abs(modificadorGlobalCondicao);
+    }
   }
+
+  if (listaCondicoes) {
+    msg = msg + "\n" + "*`" + listaCondicoes + "`*";
+  }
+  
   const cachedUser = await guild.members.fetch({ query: received["Jogador"], limit: 1 });
 
   sheetUser = cachedUser.first();
